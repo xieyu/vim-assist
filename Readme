@@ -1,0 +1,16 @@
+Finder file in paths with regular expression
+
+Attenion:
+Change var paths to your own in plugin/Finder.vim function findFile, I know it's very Ugly to do this. 
+May be I should read it from a file, or the global var defined in usr's .vimrc. not decide yet.
+
+Useage:
+ press <ctrl-f> to active the query, if find something,it  will show a output window that list the Found file path. 
+ In output window, move to the line that you want open, press <Eneter> to hide the output window and show that File in last window. 
+ <Space> 's behavior is same with <Enter> But keep the output window
+
+TODO:
+1. add options for query.
+2. make it support find function or symbol.
+
+
