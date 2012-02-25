@@ -31,27 +31,34 @@ paths = "/Users/ic/codes/python:/Users/ic/codes/mypaint/:/Users/ic/codes/Finder/
 paths = paths.split(':')
 
 def dispather(args):
-	parser= optparser.Optionparser()
+	parser= optparse.Optionparser()
 	parser.add_option("-f", "--findFile", dest="findFile")
 	parser.add_option("-g", "--findPatterns", dest="grepPatterns")
 	(options, args) = parser.parser_args(args)
 
-def getFilePattern():
-	pattern = vim.eval('input("file pattern :)")')
-	print "hi"
-	if not pattern:
-		return None
+def getFindFileArgs():
+	args = vim.eval('input("file pattern :)")')
+	if not args:
+		return (None, None)
+	parser = optparse.OptionParser()
+	parser.add_option("-b", dest = "onlyfindInBufferList", action = "store_false", help = "just find in current BufferList")
+	args = args.split()
+	(options, args) = parser.parse_args(args)
+	print args
+	pattern = args[0]
 	try:
 		pattern = re.compile(pattern, re.IGNORECASE)
 	except:
 		print "Sorry, Can not understand it :("
 		return None
-	return pattern
+	return (options.onlyfindInBufferList, pattern)
 
 def findFile():
-	pattern = getFilePattern()
+	(onlyfindInBufferList, pattern) = getFindFileArgs()
 	if pattern:
-		results = MyFinder.findFileInPaths(pattern, paths)	
+		results = MyFinder.findFileInBufferList(pattern)
+		if not onlyfindInBufferList:
+			results = MyFinder.findFileInPaths(pattern, paths)	
 		if results:
 			showResults("findResults:", results, "findFileHandler")
 		else:
