@@ -11,54 +11,91 @@
 "		     press <Space> 's behavior is same with <Enter> But keep the
 "		     output window.
 python<<EOF
+
 import vim
 import os
 import sys
 import re
+import optparse
 
 scriptdir = os.path.dirname(vim.eval('expand("<sfile>")'))
 if scriptdir not in sys.path:
     sys.path.insert(0, scriptdir)
 
+import MyFinder
 import VimUi
 
 vim.command("map <C-f> :py findFile()<CR>")
 
-def findFile():
-	paths="/Users/ic/codes/python:/Users/ic/codes/mypaint/:/Users/ic/codes/Finder/"
-	patterns = vim.eval('input("File pattern ? ")')
-	if patterns:
-		results = findFileInPaths(paths, patterns)	
-		windowId = int(vim.eval("winnr()"))
-		if results:
-			ui = VimUi.UI(title="findResults")
-			ui.setContents(results)
-			ui.show()
-			vim.command("map <buffer> <Space> :py VimUi.openInWindow(%d, hideCurrent=False)<CR>"%windowId)
-			vim.command("map <buffer> <Enter> :py VimUi.openInWindow(%d, hideCurrent=True)<CR>"%windowId)
-		else:
-			vim.command('echo "So Sorry,i cannot Find file with pattern %s"'%patterns)
+paths = "/Users/ic/codes/python:/Users/ic/codes/mypaint/:/Users/ic/codes/Finder/:/Users/ic/demos"
+paths = paths.split(':')
 
+def dispather(args):
+	parser= optparser.Optionparser()
+	parser.add_option("-f", "--findFile", dest="findFile")
+	parser.add_option("-g", "--findPatterns", dest="grepPatterns")
+	(options, args) = parser.parser_args(args)
 
-def findFileInPaths(paths, pattern):
+def getFilePattern():
+	pattern = vim.eval('input("file pattern :)")')
+	print "hi"
+	if not pattern:
+		return None
 	try:
-		m = re.compile(pattern)
+		pattern = re.compile(pattern, re.IGNORECASE)
 	except:
-		print "not vaildate patterns"
-		return []
-	paths = paths.split(':')
-	results = []
-	for path in paths:
-		rootDir = os.path.expandvars(path)
-		if not os.path.exists(rootDir):
-			print "%s not exists"%rootDir
-		for root, dirs, files in os.walk(rootDir):
-			for dirPath in dirs:
-				if m.match(dirPath):
-					results.append(os.path.join(root, dirPath))
-			for filePath in files:
-				if m.match(filePath):
-					results.append(os.path.join(root ,filePath))
-	return results
+		print "Sorry, Can not understand it :("
+		return None
+	return pattern
+
+def findFile():
+	pattern = getFilePattern()
+	if pattern:
+		results = MyFinder.findFileInPaths(pattern, paths)	
+		if results:
+			showResults("findResults:", results, "findFileHandler")
+		else:
+			vim.command('echo "So Sorry,cannot Find it"')
+
+def grepPattern(linePattern, Files):
+	results = MyFinder.grepPatternInFiles(linePattern, filePaths)	
+	if results:
+		showResults("findResults:", results, "grepPatternHandler")
+	else:
+		vim.command('echoho "Sorry, Cannot find it"')
+
+
+def showResults(showTitle, results, handler):
+	windowId = int(vim.eval("winnr()"))
+	ui = VimUi.UI(title=showTitle)
+	ui.setContents(results)
+	ui.show()
+	vim.command("map <buffer> <Space> :py %s(%d, hideCurrent=False)<CR>"%(handler,windowId))
+	vim.command("map <buffer> <Enter> :py %s(%d, hideCurrent=True)<CR>"%(handler, windowId))
+	
+def findFileHandler(windowId, hideCurrent):
+	filePath = vim.current.line
+	if os.path.exists(filePath):
+		if hideCurrent:
+			vim.command("hide") #hide current window
+		vim.command("%d wincmd w"%windowId) #move focus to windowId
+		#TODO:handle when buffer is already loaded
+		vim.command("e %s"%filePath)
+
+def grepPatternHandler(windowId, hideCurrent):
+	content = vim.current.line
+	temp = content.split(":")
+	try:
+		filePath, lineNum = (temp[0], int(temp[1]))
+	except:
+		return
+
+	if os.path.exists(filePath):
+		if hideCurrent:
+			vim.command("hide")
+		vim.command("%d wincmd w"%windowId) #move focus to windowId
+		vim.command("e %s"%filePath)
+		vim.command("%d"%lineNum) #jump to that line
+	pass
 
 EOF
