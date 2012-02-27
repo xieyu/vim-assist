@@ -2,7 +2,7 @@
 "Author:     xieyu3 at gmail dot com
 "Usage:      list the directory in the paths, sperate it with symbol ':'
 "
-"		     press <ctrl-F> to active the query, if find something,it  will show a
+"		     press <ctrl-f> to active the query, if find something,it  will show a
 "		     output window that list the Found file path. 
 "
 "		     In output window, move to the line that you want open, press <Eneter> 
@@ -26,46 +26,89 @@ import MyFinder
 import VimUi
 
 vim.command("map <C-f> :py findFile()<CR>")
+vim.command("nmap <?> :py grepPattern()<CR>")
 
-paths = "/Users/ic/codes/python:/Users/ic/codes/mypaint/:/Users/ic/codes/Finder/:/Users/ic/demos"
+paths = "/Users/ic/codes/python:/Users/ic/codes/mypaint/:/Users/ic/codes/Finder/:/Users/ic/demos:/Users/ic/.vim"
 paths = paths.split(':')
 
-def dispather(args):
-	parser= optparse.Optionparser()
-	parser.add_option("-f", "--findFile", dest="findFile")
-	parser.add_option("-g", "--findPatterns", dest="grepPatterns")
-	(options, args) = parser.parser_args(args)
-
 def getFindFileArgs():
-	args = vim.eval('input("file pattern :)")')
+	args = vim.eval('input("file pattern: ")')
 	if not args:
 		return (None, None)
 	parser = optparse.OptionParser()
-	parser.add_option("-b", dest = "onlyfindInBufferList", action = "store_false", help = "just find in current BufferList")
-	args = args.split()
-	(options, args) = parser.parse_args(args)
-	print args
-	pattern = args[0]
+	parser.add_option("-b", dest = "onlyfindInBufferList", action = "store_true", help = "just find in current BufferList")
+	(options, args) = parser.parse_args(args.split())
+	try:
+		pattern = args[0]
+	except:
+		#just list all buffers if no pattern
+		if options.onlyfindInBufferList:
+			pattern = ".*"
 	try:
 		pattern = re.compile(pattern, re.IGNORECASE)
 	except:
 		print "Sorry, Can not understand it :("
-		return None
+		return (None, None)
 	return (options.onlyfindInBufferList, pattern)
 
 def findFile():
 	(onlyfindInBufferList, pattern) = getFindFileArgs()
+	results = []
 	if pattern:
-		results = MyFinder.findFileInBufferList(pattern)
+		results.extend( MyFinder.findFileInBufferList(pattern))
 		if not onlyfindInBufferList:
-			results = MyFinder.findFileInPaths(pattern, paths)	
+			results.extend(MyFinder.findFileInPaths(pattern, paths))
 		if results:
 			showResults("findResults:", results, "findFileHandler")
 		else:
-			vim.command('echo "So Sorry,cannot Find it"')
+			vim.command('echo "So Sorry, cannot Find it"')
 
-def grepPattern(linePattern, Files):
-	results = MyFinder.grepPatternInFiles(linePattern, filePaths)	
+def getGrepPatternArgs():
+	args = vim.eval('input("grep: ")')
+	if not args:
+		return(None, None, None)
+	parser = optparse.OptionParser()
+	parser.add_option("-b", dest ="onlyGrepInBuffer", action = "store_true", help = "just grep in buffer")
+	parser.add_option("-f", dest = "fileNamePattern", help = "the files math that pattern that will be greped") 
+	(options, args) = parser.parse_args(args.split())
+	try:
+		linePattern = args[0]
+	except:
+		return (None, None, None)
+
+	if options.fileNamePattern is None:
+		if options.onlyGrepInBuffer:
+			options.fileNamepattern = ".*"
+			print "options.fileNamePattern is%s"%options.fileNamePattern
+		else:
+			return (None, None, None)
+	try:
+		print "fileNamePattern is %s"%options.fileNamePattern
+		fileNamePattern = re.compile(options.fileNamePattern)
+		print "line pattern is %s"%linePattern
+		linePattern =re.compile(linePattern)
+	except:
+		print "Sorry, Can not undersand it :("
+		return (None, None, None)
+	return (options.onlyGrepInBuffer, fileNamePattern, linePattern)
+
+
+def grepPattern():
+#(onlyGrepInBuffer, fileNamePattern, linePattern) = getGrepPatternArgs()
+	(onlyGrepInBuffer, fileNamePattern, linePattern) = (True, re.compile("vim"), re.compile("grep"))
+	print "after assignment"
+	if onlyGrepInBuffer is None or fileNamePattern is None or linePattern is None:
+		return
+
+	filePaths = []
+	filePaths.extend(MyFinder.findFileInBufferList(fileNamePattern))
+	if not onlyGrepInBuffer:
+		filePaths.extend(MyFinder.findFileInPaths(fileNamePattern))
+	if filePaths is []:
+		print "file path is None"
+		return
+		#results = MyFinder.grepPatternInFiles(linePattern, filePaths)
+	results = MyFinder.grepPatternInFile(linePattern, filePaths)
 	if results:
 		showResults("findResults:", results, "grepPatternHandler")
 	else:

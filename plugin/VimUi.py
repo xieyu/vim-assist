@@ -3,7 +3,6 @@
 #License: BSD
 
 import vim
-import sys
 import os
 
 class UI:
@@ -24,7 +23,7 @@ class UI:
 		self.widget.setContents(self.contents)
 		self.widget.show()
 	#set min and max lines of the ui's height
-	def setHeightRange(minHeight, maxHeight):
+	def setHeightRange(self, minHeight, maxHeight):
 		self.minHeight = minHeight
 		self.maxHeight = maxHeight
 
@@ -38,8 +37,6 @@ class VimWidget:
 
 	def close(self, bufferName):
 		bufferId = int(vim.eval("bufnr('%s')"%bufferName))
-		print bufferId
-		print bufferName
 		if bufferId != -1:
 			vim.command("bdelete! %d"%bufferId)
 	

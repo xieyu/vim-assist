@@ -9,16 +9,18 @@ def findFileInPaths(pattern, dirPaths):
 
 def findFileInPath(pattern, dirPath):
 	results = []
-	for rootDir, dirName, fileName in os.walk(dirPath):
-		if pattern.match(fileName):
-			results.append(os.path.join(rootDir, fileName))
+	for rootDir, dirs, files in os.walk(dirPath):
+		for fileName in files:
+			if pattern.match(fileName):
+				results.append(os.path.join(rootDir, fileName))
 	return results
 
 def findFileInBufferList(pattern):
 	result = []
 	for buf in vim.buffers:
-		if pattern.match(buf.name):
-			result.append(buf.name)
+		if os.path.exists(buf.name):
+			if pattern.match(os.path.basename(buf.name)):
+				result.append(buf.name)
 	return result
 
 def grepPatternInFiles(pattern, filePaths):
@@ -28,7 +30,8 @@ def grepPatternInFiles(pattern, filePaths):
 	return results
 
 def grepPatternInFile(pattern, filePath):
-	return grepPatternInLines(pattern, file.readlines(filePath))
+	return grepPatternInLines(pattern, file.open(filePath).readlines())
+
 
 def grepPatternInLines(pattern, lines):
 	lineNum = 0
