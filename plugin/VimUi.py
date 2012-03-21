@@ -76,6 +76,7 @@ def showResults(title, results, fileParser):
 	vim.command("map <buffer> <Space> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=False)<CR>"%("VimUi.openInWindow", windowId, fileParser))
 	vim.command("map <buffer> <Enter> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.openInWindow", windowId, fileParser))
 	vim.command("map <buffer> o :py %s(fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.systemOpen", fileParser))
+	vim.command("map <buffer> <silent> <ESC> :hide<CR>")
 
 #open file in window with windowId
 def openInWindow(windowId, fileParser, hideSelfAfterOpen):
