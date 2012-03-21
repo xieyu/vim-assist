@@ -5,45 +5,24 @@
 import vim
 import os
 
-class UI:
-	def __init__(self, title):
-		self.title = title
-		self.widget = None
-		self.contents= []
-		self.minHeight = 5
-		self.maxHeight = 8
-
-	def createWidget(self):
-		self.widget = VimWidget(self.title)
-		self.widget.setHeight(max(self.minHeight, min(self.maxHeight, len(self.contents))))
-
-	def show(self):
-		if self.widget is None:
-			self.createWidget()
-		self.widget.setContents(self.contents)
-		self.widget.show()
-	#set min and max lines of the ui's height
-	def setHeightRange(self, minHeight, maxHeight):
-		self.minHeight = minHeight
-		self.maxHeight = maxHeight
-
-	def setContents(self, contents):
-		self.contents = contents
-
 class VimWidget:
 	def __init__(self, bufferName):
 		self.bufferName = bufferName
 		self.create(self.bufferName)
+		self.minHeight = None
+		self.maxHeight = None
 
-	def close(self, bufferName):
-		bufferId = int(vim.eval("bufnr('%s')"%bufferName))
-		if bufferId != -1:
-			vim.command("bdelete! %d"%bufferId)
+	def close(self):
+		try:
+			bufferId = int(vim.eval("bufnr('%s')"%self.bufferName))
+			if bufferId != -1:
+				vim.command("bdelete! %d"%bufferId)
+		except:
+			pass
 	
 	def create(self, bufferName):
 		#close the old one, if it exists
-		#TODO:avoid kill the buffer that opened by User
-		self.close(self.bufferName) 
+		self.close() 
 		vim.command("bo sp %s"%bufferName) #create a new buffer on bottom
 		self.bufferId = int(vim.eval("bufnr('%')"))
 		self.windowId = int(vim.eval("winnr()"))
@@ -54,40 +33,66 @@ class VimWidget:
 			if w.buffer.number == self.bufferId:
 				self.window = w
 
-	def getBuffer(self):
-		return self.buffer
+	def setContents(self, contents):
+		self.unlock()
+		self.buffer[:] = contents
+		self.lock()
+		self.updateWindowHeight()
+
+	#TODO:use python args list at here
+	def setLocalOptions(self, options):
+		for option in options:
+			vim.command("setlocal %s"%option)
 
 	def setHeight(self, height):
 		self.window.height = height
 
-	def setContents(self, contents):
-		self.buffer[:] = contents
+	def setHeightRange(self, minHeight, maxHeight):
+		self.minHeight = minHeight
+		self.maxHeight = maxHeight
+		self.setHeight(max(self.minHeight, min(self.maxHeight, len(self.buffer))))
 
-	def setBufProp(self, varname,value):
-		vim.eval('setbufvar(%d,"%s","%s")'%self.bufferId, str(varname), str(value))
-
-	def getBufProp(self, varname):
-		return vim.eval('getbufvar(%d,"%s")'%self.bufferId, str(varname))
-
-	def setWindowProp(self, varname,value):
-		vim.eval('setwinvar(%d,"%s","%s")'%(self.bufferId, str(varname), str(value)))
-
-	def getWindowProp(self, varname):
-		return vim.eval('getwinvar(%d,"%s")'%self.bufferId, str(varname))
+	def updateWindowHeight(self):
+		if self.minHeight and self.maxHeight:
+			self.setHeight(max(self.minHeight, min(self.maxHeight, len(self.buffer))))
 
 	def show(self):
 		vim.command("redraw")
 	
+	def lock(self):
+		#TODO:set it only when option nomodifiable is already setted 
+		vim.command("setlocal nomodifiable")
 
-def bufferExists(bufferName):
-	return int(vim.eval("bufexists('%s')"%bufferName))
+	def unlock(self):
+		vim.command("setlocal modifiable")
 
-def openInWindow(windowId, hideCurrent):
-	filePath = vim.current.line
+def showResults(title, results, fileParser):
+	windowId = int(vim.eval("winnr()"))
+	widget = VimWidget(title)
+	widget.setContents(results)
+	widget.setLocalOptions(("buftype=nofile", "nomodifiable", "nobuflisted" ))
+	widget.setHeightRange(5, 8)
+	widget.show()
+	vim.command("map <buffer> <Space> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=False)<CR>"%("VimUi.openInWindow", windowId, fileParser))
+	vim.command("map <buffer> <Enter> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.openInWindow", windowId, fileParser))
+	vim.command("map <buffer> o :py %s(fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.systemOpen", fileParser))
+
+#open file in window with windowId
+def openInWindow(windowId, fileParser, hideSelfAfterOpen):
+	(filePath, lineNum) = fileParser(vim.current.line)
+
+	#TODO:set lineNum more correctly. maybe half of option lines
+	if lineNum is None:
+		lineNum = 20
+
 	if(os.path.exists(filePath)):
-		if hideCurrent:
+		if hideSelfAfterOpen:
 			vim.command("hide") #hide current window
 		vim.command("%d wincmd w"%windowId) #move focus to windowId
 		#TODO:handle when buffer is already loaded
 		vim.command("e %s"%filePath)
+		vim.command("%d"%lineNum) #jump to that line
 
+def systemOpen(fileParser, hideSelfAfterOpen):
+	(filePath, lineNum) = fileParser(vim.current.line)
+	os.system("open %s"%filePath)
