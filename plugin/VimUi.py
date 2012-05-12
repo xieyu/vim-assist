@@ -73,13 +73,15 @@ class VimWidget:
 
 #Window that can register key map
 class Window:
-	def __init__(self, selfName, title):
+	def __init__(self, selfName, title=None):
 		'''selfName is a hack for in vim, so we can call self member function, it should be the same with your var
 		   for example: window = Window("window", title), *make sure python can access the name from glaobal scope*
-		   and if you set win= window, then please call win.setSelfName("win") before call win.show()
 		   it is used in self.doMapMemberFunction function.
 		'''
 		self.selfName = selfName
+		self.reNew(title)
+
+	def reNew(self, title):
 		self.title = title
 		self.widget = None
 		self.keyMaps = []
@@ -133,13 +135,20 @@ class PromptWindow(Window):
 	'''window with prompt line, which is used for get user input immediately, 
 	it will call listener when user input changed
 	'''
-	def __init__(self, selfName, title, listener):
+	def __init__(self, selfName, title=None, listener = None):
 		Window.__init__(self, selfName, title)
+		self.reNew(title, listener)
+
+	def reNew(self, title, listener):
+		Window.reNew(self, title, listener)
 		self.prompt = Prompt(listener)
 		self.makeKeysMap()
 
 	def getUserInput(self):
 		return self.prompt.getContent()
+
+	def setListener(self, listener):
+		self.prompt.setListener(listener)
 
 	#private
 	def makeKeysMap(self):
@@ -182,6 +191,9 @@ class Prompt:
 		self.content=[]
 		self.listener = listener
 		self.col = 0
+	
+	def setListener(self, listener):
+		self.listener = listener
 
 	def add(self, key):
 		self.content.append(key)
@@ -254,8 +266,7 @@ class Prompt:
 		self.listener(self.getContent())
 
 	def getContent(self):
-		#return "".join(self.content)
-		return "cusor is %d"%self.col+"".join(self.content)
+		return "".join(self.content)
 
 	def moveCursor(self, step):
 		self.col += step
