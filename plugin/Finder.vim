@@ -21,14 +21,13 @@ let g:paths="/Users/ic/codes/:/Users/ic/demos:/Users/ic/.vim"
 let g:pathsSep=":"
 
 "Maps:
-map <C-f> :py findFile()<CR>
+map <C-f> :py findWord()<CR>
 
 python<<EOF
 import vim
 import os
 import sys
 import re
-import optparse
 
 scriptdir = os.path.dirname(vim.eval('expand("<sfile>")'))
 if scriptdir not in sys.path:
@@ -37,51 +36,36 @@ if scriptdir not in sys.path:
 import MyFinder
 import VimUi
 
-#vim.command("map <C-f> :py findFile()<CR>")
 
-#TODO:check if these vars exists
-paths = vim.eval('g:paths')
-pathsSep = vim.eval('g:pathsSep')
-paths = paths.split(pathsSep)
+#vim.command("noremap <silent> <C-f> :py findWord()<CR>")
 
-fileFinder = MyFinder.FileFinder(paths)
+#a global window that is shared, reNew it before use it
+promptWindow = VimUi.PromptWindow("promptWindow")
 
-def getFindFileArgs():
-	args = vim.eval('input("file pattern: ")')
-	if not args:
-		return (None, None)
-	parser = optparse.OptionParser()
-	parser.add_option("-b", dest = "onlyfindInBufferList", action = "store_true", help = "just find in current BufferList")
-	(options, args) = parser.parse_args(args.split())
-	try:
-		pattern = args[0]
-	except:
-		#just list all buffers if no pattern
-		if options.onlyfindInBufferList:
-			pattern = ".*"
-	try:
-		pattern = re.compile(pattern, re.IGNORECASE)
-	except:
-		print "Sorry, Can not understand it :("
-		return (None, None)
-	return (options.onlyfindInBufferList, pattern)
+def findWord():
+	candidates = VimUi.Utils.getCurrentBufferContent()
+	def fuzzyCompare(pattern, line):
+		return pattern in line
+	finder = wordFinder(candidates, fuzzyCompare)
+	matchWindow =MatchWindow("match",promptWindow, finder)
 
-def findFile():
-	(onlyfindInBufferList, pattern) = getFindFileArgs()
-	results = []
-	if pattern:
-		results.extend( fileFinder.searchInBufferList(pattern))
-		if not onlyfindInBufferList:
-			results.extend(fileFinder.search(pattern))
-		if results:
-			#make it unique
-			results =list(set(results))
-			VimUi.showResults("findResults", results, "findFileHandler")
-		else:
-			vim.command('echo "So Sorry, cannot Find it :("')
+class MatchWindow:
+	def __init__(self, title, window, finder):
+		self.window = window
+		self.window.reNew(title, self.userInputListener)
+		self.finder = finder
+		self.window.show()
 
-def findFileHandler(line):
-	filePath = line
-	lineNum = None
-	return (filePath, lineNum)
+	def userInputListener(self, userInput):
+		result = self.finder.query(userInput)
+		self.window.setContent(result)
+
+class wordFinder:
+	def __init__(self, candidates, compare):
+		self.candidates = candidates
+		self.compare = compare
+
+	def query(self, pattern):
+		return filter(lambda x : self.compare(pattern, x), self.candidates)
 EOF
+	
