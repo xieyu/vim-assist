@@ -79,7 +79,9 @@ class Window:
 		   it is used in self.doMapMemberFunction function.
 		'''
 		self.selfName = selfName
-		self.reNew(title)
+		self.title = title
+		self.widget = None
+		self.keyMaps = []
 
 	def reNew(self, title):
 		self.title = title
@@ -108,10 +110,9 @@ class Window:
 		self.widget = VimWidget(self.title)
 		self.makeKeysMap()
 		self.widget.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted" ))
-		self.widget.setHeightRange(5, 8)
+		self.widget.setHeightRange(5, 15)
 		for (key, function, param) in self.keyMaps:
 			self.doMap(key, function, param)
-		vim.command("noremap <C-m> :map<CR>")
 
 	def close(self):
 		vim.command(":close")
@@ -137,10 +138,11 @@ class PromptWindow(Window):
 	'''
 	def __init__(self, selfName, title=None, listener = None):
 		Window.__init__(self, selfName, title)
-		self.reNew(title, listener)
+		self.prompt = Prompt(listener)
+		self.makeKeysMap()
 
 	def reNew(self, title, listener):
-		Window.reNew(self, title, listener)
+		Window.reNew(self, title)
 		self.prompt = Prompt(listener)
 		self.makeKeysMap()
 
@@ -289,3 +291,9 @@ class Prompt:
 			cursor = str(self.content[self.col])
 			right = "".join(self.content[self.col + 1: len(self.content)])
 		return (left, cursor, right)
+
+class Utils:
+	@staticmethod
+	def getCurrentBufferContent():
+		return vim.current.buffer[:]
+
