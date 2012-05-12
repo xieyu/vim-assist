@@ -3,7 +3,6 @@
 #License: BSD
 
 import vim
-import os
 import string
 
 class VimWidget:
@@ -12,6 +11,7 @@ class VimWidget:
 		self.create(self.bufferName)
 		self.minHeight = None
 		self.maxHeight = None
+		self.options = None
 
 	def close(self):
 		try:
@@ -24,7 +24,8 @@ class VimWidget:
 	def create(self, bufferName):
 		#close the old one, if it exists
 		self.close() 
-		vim.command("bo sp %s"%bufferName) #create a new buffer on bottom
+		#create a new buffer on bottom
+		vim.command("bo sp %s"%bufferName) 
 		self.bufferId = int(vim.eval("bufnr('%')"))
 		self.windowId = int(vim.eval("winnr()"))
 		for b in vim.buffers:
@@ -40,8 +41,12 @@ class VimWidget:
 		self.lock()
 		self.updateWindowHeight()
 
-	def setLocalOptions(self, options):
-		for option in options:
+	def getContent(self):
+		return self.buffer[:]
+
+	def setOptions(self, options):
+		self.options=options
+		for option in self.options:
 			vim.command("setlocal %s"%option)
 
 	def setHeight(self, height):
@@ -60,8 +65,8 @@ class VimWidget:
 		vim.command("redraw")
 	
 	def lock(self):
-		#TODO:set it only when option nomodifiable is already setted 
-		vim.command("setlocal nomodifiable")
+		if self.options and "nomodifiable" in self.options:
+			vim.command("setlocal nomodifiable")
 
 	def unlock(self):
 		vim.command("setlocal modifiable")
@@ -91,21 +96,23 @@ class Window:
 	def getContent(self):
 		self.widget.getContent()
 
+	def setOptions(self, options):
+		self.widget.setOptions(options)
+
+	def setHeightRange(self, minHeight, maxHeight):
+		self.widget.setHeightRange(minHeight, maxHeight)
+
 	def show(self):
 		self.widget = VimWidget(self.title)
 		self.makeKeysMap()
-		self.widget.setLocalOptions(("buftype=nofile", "nobuflisted" ))
+		self.widget.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted" ))
 		self.widget.setHeightRange(5, 8)
 		for (key, function, param) in self.keyMaps:
 			self.doMap(key, function, param)
 		vim.command("noremap <C-m> :map<CR>")
 
-
 	def close(self):
 		vim.command(":close")
-
-	def setOptions(self, options):
-		pass 
 
 	def registerKeyMap(self, key, function, param=None):
 		self.keyMaps.append((key, function, param))
@@ -122,12 +129,19 @@ class Window:
 		self.registerKeyMap(key, functionName, param)
 
 #window that with prompt line
-class MatchWindow(Window):
+class PromptWindow(Window):
+	'''window with prompt line, which is used for get user input immediately, 
+	it will call listener when user input changed
+	'''
 	def __init__(self, selfName, title, listener):
 		Window.__init__(self, selfName, title)
 		self.prompt = Prompt(listener)
 		self.makeKeysMap()
 
+	def getUserInput(self):
+		return self.prompt.getContent()
+
+	#private
 	def makeKeysMap(self):
 		#normal keys
 		punctuation ='<>`@#~!"$%&/()=+*-_.,;:?\\\'{}[] ' # and space excpet "|"
@@ -145,7 +159,6 @@ class MatchWindow(Window):
 			self.registerMemberFunction(key, 'handleSpecailKey', keyValue)
 
 	def close(self):
-		print "call me"
 		Window.close(self)
 		self.prompt.close()
 
@@ -265,36 +278,3 @@ class Prompt:
 			cursor = str(self.content[self.col])
 			right = "".join(self.content[self.col + 1: len(self.content)])
 		return (left, cursor, right)
-
-
-def showResults(title, results, fileParser):
-	windowId = int(vim.eval("winnr()"))
-	widget = VimWidget(title)
-	widget.setContent(results)
-	widget.setLocalOptions(("buftype=nofile", "nomodifiable", "nobuflisted" ))
-	widget.setHeightRange(5, 8)
-	widget.show()
-	vim.command("map <buffer> <Space> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=False)<CR>"%("VimUi.openInWindow", windowId, fileParser))
-	vim.command("map <buffer> <Enter> :py %s(windowId=%d, fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.openInWindow", windowId, fileParser))
-	vim.command("map <buffer> o :py %s(fileParser=%s, hideSelfAfterOpen=True)<CR>"%("VimUi.systemOpen", fileParser))
-	vim.command("map <buffer> <silent> <ESC> :hide<CR>")
-
-#open file in window with windowId
-def openInWindow(windowId, fileParser, hideSelfAfterOpen):
-	(filePath, lineNum) = fileParser(vim.current.line)
-
-	#TODO:set lineNum more correctly. maybe half of option lines
-	if lineNum is None:
-		lineNum = 20
-
-	if(os.path.exists(filePath)):
-		if hideSelfAfterOpen:
-			vim.command("hide") #hide current window
-		vim.command("%d wincmd w"%windowId) #move focus to windowId
-		#TODO:handle when buffer is already loaded
-		vim.command("e %s"%filePath)
-		vim.command("%d"%lineNum) #jump to that line
-
-def systemOpen(fileParser, hideSelfAfterOpen):
-	(filePath, lineNum) = fileParser(vim.current.line)
-	os.system("open %s"%filePath)
