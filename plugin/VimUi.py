@@ -4,6 +4,7 @@
 
 import vim
 import string
+from SettingManager import settingManager
 
 class VimWidget:
 	def __init__(self, bufferName):
@@ -82,11 +83,20 @@ class Window:
 		self.title = title
 		self.widget = None
 		self.keyMaps = []
+		self.content = []
+		self.options = []
+		self.minHeight = 5
+		self.maxHeight = 15
 
 	def reNew(self, title):
+		#TODO:dup code, ugly here
 		self.title = title
 		self.widget = None
 		self.keyMaps = []
+		self.content = []
+		self.options = []
+		self.minHeight = 5
+		self.maxHeight = 15
 
 	def setSelfName(self, selfName):
 		self.selfName = selfName
@@ -95,22 +105,28 @@ class Window:
 		return self.selfName
 
 	def setContent(self, content):
-		self.widget.setContent(content)
+		self.content = content
+		if self.widget:
+			self.widget.setContent(self.content)
 
 	def getContent(self):
-		self.widget.getContent()
+		return self.content
 
 	def setOptions(self, options):
-		self.widget.setOptions(options)
+		self.options = options
+		if self.widget:
+			self.widget.setOptions(options)
 
 	def setHeightRange(self, minHeight, maxHeight):
-		self.widget.setHeightRange(minHeight, maxHeight)
+		self.minHeight = minHeight
+		self.maxHeight = maxHeight
+		if self.widget:
+			self.widget.setHeightRange(minHeight, maxHeight)
 
 	def show(self):
 		self.widget = VimWidget(self.title)
 		self.makeKeysMap()
-		self.widget.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted" ))
-		self.widget.setHeightRange(5, 15)
+		self.synWithWidget()
 		for (key, function, param) in self.keyMaps:
 			self.doMap(key, function, param)
 
@@ -123,13 +139,21 @@ class Window:
 	#private functions
 	def doMap(self, key, function, param=None):
 		if param is None:
-			vim.command("noremap <silent> <buffer> %s :py %s()<CR>"%(key, function))
+			#vim.command("noremap <silent> <buffer> %s :py %s()<CR>"%(key, function))
+			vim.command("noremap  <buffer> %s :py %s()<CR>"%(key, function))
 		else: 
-			vim.command('''noremap <silent> <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
+			#vim.command('''noremap <silent> <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
+			vim.command('''noremap  <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
 
 	def registerMemberFunction(self, key, function, param=None):
 		functionName = "%s.%s"%(self.selfName, function)
 		self.registerKeyMap(key, functionName, param)
+
+	def synWithWidget(self):
+		if self.widget:
+			self.widget.setContent(self.content)
+			self.widget.setOptions(self.options)
+			self.widget.setHeightRange(self.minHeight, self.maxHeight)
 
 #window that with prompt line
 class PromptWindow(Window):
@@ -139,7 +163,7 @@ class PromptWindow(Window):
 	def __init__(self, selfName, title=None, listener = None):
 		Window.__init__(self, selfName, title)
 		self.prompt = Prompt(listener)
-		self.makeKeysMap()
+		self.settingScope = "PromptWindow"
 
 	def reNew(self, title, listener):
 		Window.reNew(self, title)
@@ -159,15 +183,12 @@ class PromptWindow(Window):
 		for key in string.letters + string.digits + punctuation:
 			self.registerMemberFunction("<Char-%d>"%ord(key),'handleNormalKey',key)
 
-		#specail keys,which used to control prompt line edit
 		#note: we can not direct pass key to function in vim, so map it with values
-		specailKeysMap = [("<ESC>","esc"),("<BS>","bs"), ("<Del>","del"), ("<Left>","left"), 
-				("<Right>","right"), ("<C-a>", "home"), ("<C-e>","end"),
-				("<C-k>","kill"),("<C-h>","left"),("<C-l>","right"),
-				("<C-d>","del")]
-
-		for key, keyValue in specailKeysMap:
-			self.registerMemberFunction(key, 'handleSpecailKey', keyValue)
+		commands = ["cancel", "bs", "del", "left", "right", "home", "end", "kill"]
+		for com in commands:
+			key = settingManager.getScopeKeyMap(self.settingScope, com)
+			if key:
+				self.registerMemberFunction(key, 'doCommand', com)
 
 	def close(self):
 		Window.close(self)
@@ -176,8 +197,8 @@ class PromptWindow(Window):
 	def handleNormalKey(self, key):
 		self.prompt.add(key)
 
-	def handleSpecailKey(self, keyValue):
-		handler={"esc":self.close,
+	def doCommand(self, com):
+		handler={"cancel":self.close,
 				"bs": self.prompt.backspace,
 				"del":self.prompt.delete,
 				"right":self.prompt.cursorRight,
@@ -185,7 +206,7 @@ class PromptWindow(Window):
 				"kill" :self.prompt.killToEnd,
 				"home" :self.prompt.cursorStart,
 				"end" :self.prompt.cursorEnd
-				}[keyValue]
+				}[com]
 		handler()
 
 class Prompt:
@@ -291,9 +312,4 @@ class Prompt:
 			cursor = str(self.content[self.col])
 			right = "".join(self.content[self.col + 1: len(self.content)])
 		return (left, cursor, right)
-
-class Utils:
-	@staticmethod
-	def getCurrentBufferContent():
-		return vim.current.buffer[:]
 
