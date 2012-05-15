@@ -1,4 +1,8 @@
 import VimUtils
+from SettingManager import settingManager
+from SettingManager import ReposManager
+import os
+
 class Candidate:
 	def __init__(self, name, content, filePath = None, pos = None):
 		self.name = name
@@ -38,3 +42,19 @@ class CandidatesFactory:
 			candidates.append(item)
 		return candidates
 
+	@staticmethod
+	def createForReposPath():
+		reposMg = ReposManager(settingManager.getReposConfigureFilePath())
+		candidates = []
+		try:
+			reposPaths = reposMg.getReposPaths()
+			reposPaths = ["/Users/ic/.vim/"]
+			for repos in reposPaths:
+				for root, dirs, files in os.walk(repos):
+					for filePath in files:
+						filePath = os.path.join(root, filePath)
+						item = Candidate(name = filePath, content = filePath, filePath = filePath)
+						candidates.append(item)
+			return candidates
+		except:
+			return []

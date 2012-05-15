@@ -1,4 +1,5 @@
 import vim
+import os
 
 def getCurBufferContent():
 	return vim.current.buffer[:]
@@ -37,4 +38,5 @@ def jumpToLine(lineNum):
 
 def makeWinFocusOn(winId):
 	vim.command("%d wincmd w"%winId)
-
+def getScriptDir():
+	return os.path.dirname(vim.eval('expand("<sfile>")'))

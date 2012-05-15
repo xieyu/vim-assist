@@ -6,7 +6,8 @@
 "Options:
 "
 "Maps:
-map <C-f> :py findInCurrentBuffer()<CR>
+map <C-b> :py findInCurrentBuffer()<CR>
+map <C-f> :py findFilePaths()<CR>
 
 python<<EOF
 import os
@@ -28,6 +29,10 @@ finder_matchController = Controller.MatchController("finder_matchController")
 
 def findInCurrentBuffer():
 	candidates = CandidatesFactory.createForCurBuffer()
+	findAndShow(candidates,  queryCritic = CompareUtils.fuzzyCompare, queryContainsCompare = CompareUtils.fuzzyCompare)
+
+def findFilePaths():
+	candidates = CandidatesFactory.createForReposPath()
 	findAndShow(candidates,  queryCritic = CompareUtils.fuzzyCompare, queryContainsCompare = CompareUtils.fuzzyCompare)
 
 def findAndShow(candidates, queryCritic = CompareUtils.containCompare, queryContainsCompare = None):

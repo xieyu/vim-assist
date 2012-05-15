@@ -1,3 +1,5 @@
+import os
+import Settings
 class SettingManager:
 	def __init__(self):
 		self.keyMaps={}
@@ -16,37 +18,44 @@ class SettingManager:
 			self.keyMaps[scope]={}
 			self.keyMaps[scope][command] = key
 
-#mappings
-keyMaps={
-		"MatchController":[
-		("<C-j>", "selectPre"),
-		("<C-p>", "selectPre"), #Don't know why C-p not work
-		("<C-n>","selectNext"), 
-		("<Up>", "selectPre"),
-		("<Down>", "selectNext"),
-		("<CR>", "openInOldWinThenHideSelf"),
-		("<C-o>","openInOldWin"),
-		("<C-t>","openInNewTab"),
-		],
+	def setReposConfigureFilePath(self, path):
+		self.reposConfigureFilePath= path
 
-		"PromptWindow":[
-		("<ESC>","cancel"),
-		("<Left>","left"),
-		("<Right>","right"),
-		("<C-a>", "home"), 
-		("<C-e>","end"),
-		("<C-h>","left"),
-		("<C-l>","right"),
-		("<BS>","bs"), 
-		("<Del>","del"), 
-		("<C-d>","del"),
-		("<C-k>","kill"),#like emacs way, del from cursor to end
-		]
-}
+	def getReposConfigureFilePath(self):
+		try:
+			return self.reposConfigureFilePath
+		except:
+			return None
+
+class ReposManager:
+	def __init__(self, configfilePath):
+		self.parser(configfilePath)
+
+	def getReposPaths(self):
+		try:
+			return self.reposPaths
+		except:
+			return None
+
+	def getFileIgnorePatterns(self):
+		return None
+
+	def getDictionIgnorePatterns(self):
+		return None
+
+	#private
+	def parser(self, filePath):
+		f = open(filePath)
+		self.reposPaths= [path for path in f.readlines() if os.path.exists(path)]
+
+
+
 #use for Manager all kinds of settings
 settingManager = SettingManager()
 
-for scope, maps in keyMaps.items():
+#set keys
+for scope, maps in Settings.keyMaps.items():
 	for keymap, command in maps:
 		settingManager.setScopeKeyMap(scope, keymap, command)
-
+#set repos paths
+settingManager.setReposConfigureFilePath(Settings.reposFilePath)
