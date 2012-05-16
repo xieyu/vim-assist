@@ -6,64 +6,86 @@ import vim
 import string
 from SettingManager import settingManager
 
-class VimWidget:
+class Widget:
 	def __init__(self, bufferName):
 		self.bufferName = bufferName
-		self.create(self.bufferName)
-		self.minHeight = None
-		self.maxHeight = None
-		self.options = None
+		self.options = []
+		self.content = []
+		#TODO:get it for setting manager
+		self.minHeight = 4
+		self.maxHeight = 15
+		self.height = 4
+		self.vimBuffer = None
+		self.vimWindow = None
 
 	def close(self):
 		try:
-			bufferId = int(vim.eval("bufnr('%s')"%self.bufferName))
-			if bufferId != -1:
-				vim.command("bdelete! %d"%bufferId)
+			vim.command("noa bun!")
 		except:
-			pass
+			vim.command("noa close!")
 	
-	def create(self, bufferName):
-		#close the old one, if it exists
-		self.close() 
-		#create a new buffer on bottom
-		vim.command("bo sp %s"%bufferName) 
-		self.bufferId = int(vim.eval("bufnr('%')"))
-		self.windowId = int(vim.eval("winnr()"))
-		for b in vim.buffers:
-			if b.number == self.bufferId:
-				self.buffer = b
-		for w in vim.windows:
-			if w.buffer.number == self.bufferId:
-				self.window = w
+	def show(self):
+		vim.command("noa keepa bo 5new %s"%self.bufferName) 
+		self.vimBuffer = vim.current.buffer
+		self.vimWindow = vim.current.window
+		self.synSettingWithVim()
+		vim.command("redraw")
 
 	def setContent(self, content):
-		self.unlock()
-		self.buffer[:] = content
-		self.lock()
-		self.updateWindowHeight()
+		self.content = content
+		self.updateContent()
 
 	def getContent(self):
-		return self.buffer[:]
+		return self.content
 
 	def setOptions(self, options):
-		self.options=options
-		for option in self.options:
-			vim.command("setlocal %s"%option)
+		self.options = options
+		self.updateOptions()
+
+	def addOptions(self, options):
+		self.options.extend(options)
+		self.updateOptions()
+
 
 	def setHeight(self, height):
-		self.window.height = height
+		self.height = height
+		self.updateHeight()
 
 	def setHeightRange(self, minHeight, maxHeight):
 		self.minHeight = minHeight
 		self.maxHeight = maxHeight
-		self.setHeight(max(self.minHeight, min(self.maxHeight, len(self.buffer))))
+		self.updateWindowHeight()
+
+	#private:
+	def updateOptions(self):
+		#FIXME: does it matter of dup setings?
+		if self.vimBuffer:
+			for option in self.options:
+				vim.command("setlocal %s"%option)
+
+	def updateContent(self):
+		if self.vimBuffer:
+			self.unlock()
+			self.vimBuffer[:] = self.content
+			self.lock()
+			self.updateWindowHeight()
+
+	def updateHeight(self):
+		if self.vimWindow:
+			self.vimWindow.height = self.height
+
+	def synSettingWithVim(self):
+		self.updateContent()
+		self.updateOptions()
+		self.updateHeight()
 
 	def updateWindowHeight(self):
 		if self.minHeight and self.maxHeight:
-			self.setHeight(max(self.minHeight, min(self.maxHeight, len(self.buffer))))
-
-	def show(self):
-		vim.command("redraw")
+			if self.maxHeight < 0:
+				maxheight = len(self.content)
+			else:
+				maxheight = min(self.maxHeight, len(self.content))
+			self.setHeight(max(self.minHeight, maxheight))
 	
 	def lock(self):
 		if self.options and "nomodifiable" in self.options:
@@ -73,87 +95,43 @@ class VimWidget:
 		vim.command("setlocal modifiable")
 
 #Window that can register key map
-class Window:
+class Window(Widget):
 	def __init__(self, selfName, title=None):
 		'''selfName is a hack for in vim, so we can call self member function, it should be the same with your var
 		   for example: window = Window("window", title), *make sure python can access the name from glaobal scope*
-		   it is used in self.doMapMemberFunction function.
+		   it is used in self.doMapMemberFunction, renew before use it
 		'''
+		Widget.__init__(self, title)
 		self.selfName = selfName
-		self.title = title
-		self.widget = None
 		self.keyMaps = []
-		self.content = []
-		self.options = []
-		self.minHeight = 5
-		self.maxHeight = 15
-
-	def reNew(self, title):
-		#TODO:dup code, ugly here
-		self.title = title
-		self.widget = None
-		self.keyMaps = []
-		self.content = []
-		self.options = []
-		self.minHeight = 5
-		self.maxHeight = 15
 
 	def setSelfName(self, selfName):
 		self.selfName = selfName
 
-	def getSelfName(self, selfName):
-		return self.selfName
+	def reNew(self, title):
+		Widget.__init__(self, title)
+		self.keyMaps = []
 
-	def setContent(self, content):
-		self.content = content
-		if self.widget:
-			self.widget.setContent(self.content)
-
-	def getContent(self):
-		return self.content
-
-	def setOptions(self, options):
-		self.options = options
-		if self.widget:
-			self.widget.setOptions(options)
-
-	def setHeightRange(self, minHeight, maxHeight):
-		self.minHeight = minHeight
-		self.maxHeight = maxHeight
-		if self.widget:
-			self.widget.setHeightRange(minHeight, maxHeight)
 
 	def show(self):
-		self.widget = VimWidget(self.title)
-		self.makeKeysMap()
-		self.synWithWidget()
+		Widget.show(self)
 		for (key, function, param) in self.keyMaps:
 			self.doMap(key, function, param)
-
-	def close(self):
-		vim.command(":close")
 
 	def registerKeyMap(self, key, function, param=None):
 		self.keyMaps.append((key, function, param))
 
 	#private functions
-	def doMap(self, key, function, param=None):
-		if param is None:
-			#vim.command("noremap <silent> <buffer> %s :py %s()<CR>"%(key, function))
-			vim.command("noremap  <buffer> %s :py %s()<CR>"%(key, function))
-		else: 
-			#vim.command('''noremap <silent> <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
-			vim.command('''noremap  <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
-
 	def registerMemberFunction(self, key, function, param=None):
 		functionName = "%s.%s"%(self.selfName, function)
 		self.registerKeyMap(key, functionName, param)
 
-	def synWithWidget(self):
-		if self.widget:
-			self.widget.setContent(self.content)
-			self.widget.setOptions(self.options)
-			self.widget.setHeightRange(self.minHeight, self.maxHeight)
+	def doMap(self, key, function, param=None):
+		if param is None:
+			vim.command("nnoremap <silent> <buffer> %s :py %s()<CR>"%(key, function))
+		else: 
+			vim.command('''nnoremap <silent> <buffer> %s :py %s("%s")<CR>'''%(key, function, param))
+
 
 #window that with prompt line
 class PromptWindow(Window):
@@ -162,13 +140,25 @@ class PromptWindow(Window):
 	'''
 	def __init__(self, selfName, title=None, listener = None):
 		Window.__init__(self, selfName, title)
-		self.prompt = Prompt(listener)
 		self.settingScope = "PromptWindow"
+		self.prompt = Prompt(listener)
 
 	def reNew(self, title, listener):
 		Window.reNew(self, title)
-		self.prompt = Prompt(listener)
+		self.makePrompt(listener)
 		self.makeKeysMap()
+
+	def makePrompt(self, listener):
+		self.prompt = Prompt(listener)
+		self.commandMap ={"cancel":self.close,
+				"bs": self.prompt.backspace,
+				"del":self.prompt.delete,
+				"delWord" :self.prompt.delWord,
+				"right":self.prompt.cursorRight,
+				"left":self.prompt.cursorLeft,
+				"start" :self.prompt.cursorStart,
+				"end" :self.prompt.cursorEnd
+				}
 
 	def getUserInput(self):
 		return self.prompt.getContent()
@@ -183,11 +173,9 @@ class PromptWindow(Window):
 		for key in string.letters + string.digits + punctuation:
 			self.registerMemberFunction("<Char-%d>"%ord(key),'handleNormalKey',key)
 
-		#note: we can not direct pass key to function in vim, so map it with values
-		commands = ["cancel", "bs", "del", "left", "right", "home", "end", "kill"]
-		for com in commands:
-			key = settingManager.getScopeKeyMap(self.settingScope, com)
-			if key:
+		for com in self.commandMap.keys():
+			keys = settingManager.getScopeCommandKeys(self.settingScope, com)
+			for key in keys:
 				self.registerMemberFunction(key, 'doCommand', com)
 
 	def close(self):
@@ -198,16 +186,7 @@ class PromptWindow(Window):
 		self.prompt.add(key)
 
 	def doCommand(self, com):
-		handler={"cancel":self.close,
-				"bs": self.prompt.backspace,
-				"del":self.prompt.delete,
-				"right":self.prompt.cursorRight,
-				"left":self.prompt.cursorLeft,
-				"kill" :self.prompt.killToEnd,
-				"home" :self.prompt.cursorStart,
-				"end" :self.prompt.cursorEnd
-				}[com]
-		handler()
+		self.commandMap[com]()
 
 class Prompt:
 	def __init__(self, listener):
@@ -233,8 +212,8 @@ class Prompt:
 		if self.col > 0:
 			self.content.pop(self.col-1)
 			self.moveCursor(-1)
-			self.redraw()
 			self.notify()
+			self.redraw()
 
 	def delete(self):
 		if self.col >=0 and self.col < len(self.content):
@@ -249,20 +228,36 @@ class Prompt:
 
 	def cursorStart(self):
 		self.col=0
+		self.notify()
 		self.redraw()
 
 	def cursorEnd(self):
 		self.col=len(self.content)
+		self.notify()
 		self.redraw()
 
 	def cursorLeft(self):
 		self.moveCursor(-1)
 		self.redraw()
 
-	def killToEnd(self):
-		self.content = self.content[0:self.col]
-		self.redraw()
-		self.notify()
+	def delWord(self):
+		try:
+			left = self.content[0:self.col]
+			try:
+				right = self.content[self.col:-1]
+				right = right[right.index(" ") : -1]
+			except:
+				right = []
+			self.content = left + right
+			self.redraw()
+			self.notify()
+		except:
+			pass
+
+	def close(self):
+		self.clear()
+		vim.command("redraw")
+		vim.command("echo")
 
 	#private
 	def redraw(self):
@@ -280,23 +275,16 @@ class Prompt:
 				vim.command("echon '%s'"%text)
 		vim.command("echohl None")
 
-	def close(self):
-		self.clear()
-		vim.command("redraw")
-		vim.command("echo")
 
 	def notify(self):
 		self.listener(self.getContent())
 
 	def getContent(self):
-		return "".join(self.content)
+		return "".join(self.content) +"cusor pos %d"%self.col
 
 	def moveCursor(self, step):
 		self.col += step
-		if self.col < 0:
-			self.col = 0
-		if self.col > len(self.content):
-			self.col = len(self.content)
+		self.col = min(max(self.col, 0), len(self.content))
 		self.notify()
 
 	def segContent(self):
@@ -310,6 +298,6 @@ class Prompt:
 		left=empty.join(self.content[0:self.col])
 		if self.col < len(self.content):
 			cursor = str(self.content[self.col])
-			right = "".join(self.content[self.col + 1: len(self.content)])
+			right = empty.join(self.content[self.col + 1: len(self.content)])
 		return (left, cursor, right)
 
