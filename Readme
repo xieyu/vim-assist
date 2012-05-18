@@ -1,16 +1,25 @@
-Finder file in paths with regular expression
+#finder
+finder is a  plugin for vim, which make write extension for immedidate search 
+(like vim plugin Ctrlp Or Command-T) easily
 
-Attenion:
-Change var paths to your own in plugin/Finder.vim function findFile, I know it's very Ugly to do this. 
-May be I should read it from a file, or the global var defined in usr's .vimrc. not decide yet.
+*Written in python.
+*provide several useful components
+*easy to write extension
 
-Useage:
- press <ctrl-f> to active the query, if find something,it  will show a output window that list the Found file path. 
- In output window, move to the line that you want open, press <Eneter> to hide the output window and show that File in last window. 
- <Space> 's behavior is same with <Enter> But keep the output window
+##Concepts:
+There several Class in this packet:
+* Candidate is a basic record for search, It's member name will be shown to user, and it's member content used for search
+* Finder is used for select suite candidate from Candidates, it must provide query, getSuiteCandidate, getSuiteCandidateNum intereface
+* Acceptor will be called when user select some candidate, it must provide intereface : accept
 
-TODO:
-1. add options for query.
-2. make it support find function or symbol.
+##How to write extension
+###basic 
+You just need provide candidates that will be searched
+*see Finder.vim function findInCurrentBuffer for ref
 
+
+##Attension:
+* just use SharedFactory.getMatchController to get a controller
+
+##current not stable, not ready for use.
 
