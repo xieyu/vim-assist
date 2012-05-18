@@ -4,7 +4,6 @@
 
 import vim
 import string
-from SettingManager import settingManager
 
 class Widget:
 	def __init__(self, bufferName):
@@ -15,6 +14,7 @@ class Widget:
 		self.minHeight = 4
 		self.maxHeight = 15
 		self.height = 4
+		self.cursor = (1,1)
 		self.vimBuffer = None
 		self.vimWindow = None
 
@@ -38,6 +38,9 @@ class Widget:
 	def getContent(self):
 		return self.content
 
+	def getHeight(self):
+		return self.height
+
 	def setOptions(self, options):
 		self.options = options
 		self.updateOptions()
@@ -50,6 +53,10 @@ class Widget:
 	def setHeight(self, height):
 		self.height = height
 		self.updateHeight()
+
+	def setCursor(self, line, col):
+		self.cursor = (line, col)
+		self.updateCursor()
 
 	def setHeightRange(self, minHeight, maxHeight):
 		self.minHeight = minHeight
@@ -74,10 +81,15 @@ class Widget:
 		if self.vimWindow:
 			self.vimWindow.height = self.height
 
+	def updateCursor(self):
+		if self.vimWindow:
+			self.vimWindow.cursor = self.cursor
+
 	def synSettingWithVim(self):
 		self.updateContent()
 		self.updateOptions()
 		self.updateHeight()
+		self.updateCursor()
 
 	def updateWindowHeight(self):
 		if self.minHeight and self.maxHeight:
@@ -97,9 +109,11 @@ class Widget:
 #Window that can register key map
 class Window(Widget):
 	def __init__(self, selfName, title=None):
-		'''selfName is a hack for in vim, so we can call self member function, it should be the same with your var
-		   for example: window = Window("window", title), *make sure python can access the name from glaobal scope*
-		   it is used in self.doMapMemberFunction, renew before use it
+		'''
+		self.selfName is a hack for use memberFunction for vim keyMap, 
+		it will call the instance's memeber fuction in following way
+		:py selfName.memberFunction(), 
+		So make sure that python can access the it in global scope
 		'''
 		Widget.__init__(self, title)
 		self.selfName = selfName
@@ -142,14 +156,7 @@ class PromptWindow(Window):
 		Window.__init__(self, selfName, title)
 		self.settingScope = "PromptWindow"
 		self.prompt = Prompt(listener)
-
-	def reNew(self, title, listener):
-		Window.reNew(self, title)
-		self.makePrompt(listener)
-		self.makeKeysMap()
-
-	def makePrompt(self, listener):
-		self.prompt = Prompt(listener)
+		#command: function
 		self.commandMap ={"cancel":self.close,
 				"bs": self.prompt.backspace,
 				"del":self.prompt.delete,
@@ -159,6 +166,23 @@ class PromptWindow(Window):
 				"start" :self.prompt.cursorStart,
 				"end" :self.prompt.cursorEnd
 				}
+		#command: keysmap
+		self.keysMap = {
+				"cancel":["<esc>", "<c-c>", "<c-g>"],
+				"bs":["<BS>","<c-]>"],
+				"del":["<del>"],
+				"delWord": ["<c-w>"],
+				"left": ["<c-h>", "<left>"],
+				"right": ["<c-l>", "<right>"],
+				"start":["<c-a>"],
+				"end": ["<c-e>"],
+			}
+
+	def reNew(self, title, listener):
+		Window.reNew(self, title)
+		self.prompt.setListener(listener)
+		self.makeKeysMap()
+
 
 	def getUserInput(self):
 		return self.prompt.getContent()
@@ -174,7 +198,7 @@ class PromptWindow(Window):
 			self.registerMemberFunction("<Char-%d>"%ord(key),'handleNormalKey',key)
 
 		for com in self.commandMap.keys():
-			keys = settingManager.getScopeCommandKeys(self.settingScope, com)
+			keys = self.keysMap[com]
 			for key in keys:
 				self.registerMemberFunction(key, 'doCommand', com)
 
@@ -280,7 +304,7 @@ class Prompt:
 		self.listener(self.getContent())
 
 	def getContent(self):
-		return "".join(self.content) +"cusor pos %d"%self.col
+		return "".join(self.content)
 
 	def moveCursor(self, step):
 		self.col += step

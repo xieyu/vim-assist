@@ -1,60 +1,35 @@
-import VimUtils
-from SettingManager import settingManager
-from SettingManager import ReposManager
-import os
-
 class Candidate:
-	def __init__(self, name, content, filePath = None, pos = None):
+	def __init__(self, name, content):
+		'''name is the string that will show to user, content is used for compare and search,'''
 		self.name = name
 		self.content = content
-		self.filePath = filePath
-		self.pos= pos
-
+	
 	def getName(self):
-		'''name is the string that will show to user '''
 		return self.name
-		
-	def getFilePath(self):
-		''' if file path is None, then it will be treate as buffertype nofile in vim'''
-		return self.filePath
-
-	def getPos(self):
-		'''pos contains (linenum, col)'''
-		return self.pos
 
 	def getContent(self):
 		return self.content
 
-class CandidatesFactory:
-	@staticmethod
-	def createForCurBuffer():
-		#TODO:we need get current buffer's name
-		contents = VimUtils.getCurBufferContent()
-		filePath = VimUtils.getCurBufferName()
-		#construct candidate for every line, we also need filename
-		lineNum = 0
-		candidates = []
-		for line in contents:
-			lineNum += 1
-			name = "%d:%s"%(lineNum, line.strip())
-			item = Candidate(name = name, content = line, pos = (lineNum, 0),filePath = filePath)
-			
-			candidates.append(item)
-		return candidates
+class FileCandidate(Candidate):
+	def __init__(self, name, content, filePath):
+		Candidate.__init__(self, name, content)
+		self.filePath = filePath
+		pass
+		
+	def getFilePath(self):
+		return self.filePath
 
-	@staticmethod
-	def createForReposPath():
-		reposMg = ReposManager(settingManager.getReposConfigureFilePath())
-		candidates = []
-		try:
-			reposPaths = reposMg.getReposPaths()
-			reposPaths = ["/Users/ic/.vim/"]
-			for repos in reposPaths:
-				for root, dirs, files in os.walk(repos):
-					for filePath in files:
-						filePath = os.path.join(root, filePath)
-						item = Candidate(name = filePath, content = filePath, filePath = filePath)
-						candidates.append(item)
-			return candidates
-		except:
-			return []
+class LineCandidate(FileCandidate):
+	def __init__(self, name, content, filePath, lineNum):
+		FileCandidate.__init__(self, name, content, filePath)
+		self.lineNum = lineNum
+
+	def getLineNum(self):
+		return self.lineNum
+
+class WordCandidate(LineCandidate):
+	def __init__(self, name, content, filePath, lineNum, wordPos):
+		LineCandidate.__init__(self, name, content, filePath, lineNum)
+		self.wordPos = wordPos
+	def getWordPos(self):
+		return self.wordPos

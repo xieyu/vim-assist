@@ -5,18 +5,18 @@ class SettingManager:
 		self.keyMaps={}
 		pass
 
-	def getScopeKeyMap(self, scope, command):
+	def getScopeCommandKeys(self, scope, command):
 		try:
 			return self.keyMaps[scope][command]
 		except:
-			return None
+			return []
 
-	def setScopeKeyMap(self, scope, key, command):
+	def setScopeKeyMap(self, scope, command, keys):
 		try:
-			self.keyMaps[scope][command] = key
+			self.keyMaps[scope][command] = keys
 		except:
 			self.keyMaps[scope]={}
-			self.keyMaps[scope][command] = key
+			self.keyMaps[scope][command] = keys
 
 	def setReposConfigureFilePath(self, path):
 		self.reposConfigureFilePath= path
@@ -40,7 +40,7 @@ class ReposManager:
 	def getFileIgnorePatterns(self):
 		return None
 
-	def getDictionIgnorePatterns(self):
+	def getDirIgnorePatterns(self):
 		return None
 
 	#private
@@ -53,9 +53,12 @@ class ReposManager:
 #use for Manager all kinds of settings
 settingManager = SettingManager()
 
-#set keys
-for scope, maps in Settings.keyMaps.items():
-	for keymap, command in maps:
-		settingManager.setScopeKeyMap(scope, keymap, command)
+def setUpKeysMap():
+	for scope, maps in Settings.keyMaps.items():
+		for command, keys in maps:
+			settingManager.setScopeKeyMap(scope, command, keys)
+
 #set repos paths
-settingManager.setReposConfigureFilePath(Settings.reposFilePath)
+#settingManager.setReposConfigureFilePath(Settings.reposFilePath)
+
+#setUpKeysMap()

@@ -2,28 +2,23 @@ import VimUtils
 
 keyMaps={
 		"MatchController":[
-		("<C-j>", "selectPre"),
-		("<C-p>", "selectPre"), #Don't know why C-p does NOT work
-		("<C-n>","selectNext"), 
-		("<Up>", "selectPre"),
-		("<Down>", "selectNext"),
-		("<CR>", "openInOldWinThenHideSelf"),
-		("<C-o>","openInOldWin"),
-		("<C-t>","openInNewTab"),
+			("acceptSelect_e",["<cr>",]),
+			("acceptSelect_h",["<c-cr>","<c-s>"]),
+			("accetpSelect_t", ["<c-t>"]),
+			("accetpSelect_v", ["<c-v>"], "<RightMouse>")
 		],
 
 		"PromptWindow":[
-		("<ESC>","cancel"),
-		("<Left>","left"),
-		("<Right>","right"),
-		("<C-a>", "home"), 
-		("<C-e>","end"),
-		("<C-h>","left"),
-		("<C-l>","right"),
-		("<BS>","bs"), 
-		("<Del>","del"), 
-		("<C-d>","del"),
-		("<C-k>","kill"),#like emacs way, del from cursor to end
+			("cancel",["<esc>", "<c-c>", "<c-g>"]),
+			#del
+			("bs", ["<BS>","<c-]>"]),
+			("del",["<del>"]),
+			("delWord", ["<c-w>"]),
+			#cusor move
+			("left", ["<c-h>", "<left>"]),
+			("right", ["<c-l>", "<right>"]),
+			("start", ["<c-a>"]),
+			("end", ["<c-e>"]),
 		]
 }
 #change it to yours
