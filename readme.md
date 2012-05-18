@@ -2,9 +2,9 @@
 finder is a  plugin for vim, which make write extension for immedidate search 
 (like vim plugin Ctrlp Or Command-T) easily
 
-*Written in python.
-*provide several useful components
-*easy to write extension
+* Written in python.
+* provide several useful components
+* easy to write extension
 
 ##Concepts:
 There several Class in this packet:
