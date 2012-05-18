@@ -36,4 +36,5 @@ def findFilePaths():
 	acceptor = Acceptor.FileAcceptor()
 	matcher = SharedFactory.getMatchController(title ="findCurrentBuffer", finder = finder, acceptor = acceptor)
 	matcher.show()
+EOF
 
