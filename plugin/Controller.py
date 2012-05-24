@@ -67,6 +67,7 @@ class MatchController:
 			return
 		self.curSelect = max(min(self.curSelect + step, self.finder.getSuiteCandidateNum() -1), 0)
 		#note: vim lineNum start with 1, not zero.
+		print self.curSelect
 		self.window.setCursor(self.curSelect + 1, 0)
 
 

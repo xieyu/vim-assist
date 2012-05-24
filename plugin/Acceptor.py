@@ -19,8 +19,16 @@ MatchController.addKeyMapForCommand("acceptSelect", keys, option):
 
 in matchController the default key map that will triger accept is <cr>, and default option is None, 
 """
+class Acceptor:
+	def __init__(self):
+		pass
+	def getKeysMap():
+		"should return a dic {'key':'param',} or None"
+		return None
+	def accept(self, candidate, param):
+		pass
 
-class FileAcceptor:
+class FileAcceptor(Acceptor):
 	def __init__(self):
 		pass
 
@@ -33,10 +41,10 @@ class FileAcceptor:
 		#keep it
 		return True
 
-class LineAcceptor(FileAcceptor):
+class LineAcceptor(Acceptor):
 	def __init__(self):
-		FileAcceptor.__init__(self)
 		pass
+
 	def accept(self, lineCandidate, options = None):
 		if options is None:
 			return self.editFile(lineCandidate)
@@ -46,6 +54,15 @@ class LineAcceptor(FileAcceptor):
 		vim.command("%d"%lineCandidate.getLineNum())
 		#keep the window
 		return True
+
+class WorldAcceptor(Acceptor):
+	def __init__(self):
+		pass
+	def accept(self, lineCandidate, options = None):
+		pass
+	def editFile(self, WordCandidate):
+		pass
+
 		
 
 
