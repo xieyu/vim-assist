@@ -45,4 +45,98 @@ class ScanFinder:
 	def getSuiteCandidateNum(self):
 		return len(self.suiteCandidates)
 
+class TrieFinder:
+	def __init__(self):
+		self.root={}
+		self.suiteCandidates=[]
+		#to make it unique to avoid conflict with candidates
+		self.leafName = "__TrieFinderCandidate__"
 
+	def addCandidates(self, candidateList):
+		for candidate in candidateList:
+			iterator = self.root
+			for char in candidate.getContent().lower():
+				if not iterator.has_key(char):
+					iterator[char]={}
+				iterator = iterator[char]
+			iterator[self.leafName] = candidate
+		pass
+	
+	def setCandidates(self, candidatesList):
+		self.root={}
+		self.suiteCandidates = []
+		self.addCandidates(candidatesList)
+
+	def query(self, word):
+		#self.suiteCandidates = self.prefixQuery(word)
+		self.suiteCandidates = self.fuzzyQuery(word)
+		return [iterm.getName() for iterm in self.suiteCandidates]
+
+	def prefixQuery(self, word):
+		node = self.root
+		for w in word:
+			if node.has_key(w):
+				node = node[w]
+			else:
+				node = None
+				break
+		if node:
+			return self.getAllChildCandidate(node)
+		return []
+
+	def fuzzyQuery(self, word):
+		return self.doFuzzyQuery(self.root, word.lower())
+
+	def doFuzzyQuery(self, node, word):
+		result = []
+		#if world is empty
+		if not word:
+			return result
+
+		for i, w in enumerate(word):
+			if node.has_key(w):
+				node = node[w]
+			else:
+				#node is leafnode, so return [] if unmatch
+				if node.has_key(self.leafName):
+					return []
+				#then ignore this unmatch, and research in all its child nodes 
+				for key in node.keys():
+					result.extend(self.doFuzzyQuery(node[key], word[i:-1]))
+				return result
+
+		if node:
+			result.extend(self.getAllChildCandidate(node))
+		return result
+
+	def getAllChildCandidate(self, node):
+		candidates = []
+		if node.has_key(self.leafName):
+			candidates.append(node[self.leafName])
+			return candidates
+
+		for key in node.keys():
+			result = self.getAllChildCandidate(node[key])
+			candidates.extend(result)
+
+		return candidates
+
+
+	def getSuiteCandidate(self, index):
+		try:
+			return self.suiteCandidates[index]
+		except:
+			return None
+
+class SuffixTree:
+	class Node:
+		pass
+
+	def __init__(self):
+		self.root = {}
+		self.active_point = None
+		self.reminder = 1
+		pass
+	#private
+	def addPrefix():
+		pass
