@@ -1,6 +1,4 @@
 import Controller
-import Finder
-import Acceptor
 from Candidates import LineCandidate
 from Candidates import FileCandidate
 import VimUtils
@@ -9,16 +7,25 @@ import os
 ''''
 This factory is famous for create normal components to make your life more comfortable....:D
 
+@important:
+	you must import SharedFactory in this way:
+	from Factory import SharedFactory
+	see MatchController and promptWindow 's doc for reason
+
 @Attention: function in SharedFactory, will retun a shared object,
 '''
 
 
 class SharedFactory:
+	import VimUi
+	promptWindow = VimUi.PromptWindow("SharedFactory.promptWindow")
+	matchController = Controller.MatchController("SharedFactory.matchController")
 	@staticmethod
 	def getMatchController(title, finder, acceptor):
 		'''Note, the returned matcher is shared, the the one you get before will be clean and be reused'''
-		matchController.reNew(title, finder, acceptor, promptWindow)
-		return matchController
+		SharedFactory.matchController.reNew(title, finder, acceptor,
+				SharedFactory.promptWindow)
+		return SharedFactory.matchController
 
 
 class CandidatesFactory:
@@ -53,11 +60,4 @@ class CandidatesFactory:
 		except:
 			return []
 
-class FinderFactory:
-	def createScanFinder():
-		pass
 
-
-import VimUi
-promptWindow = VimUi.PromptWindow("Factory.promptWindow")
-matchController = Controller.MatchController("Factory.matchController")

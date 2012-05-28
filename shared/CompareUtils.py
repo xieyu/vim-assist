@@ -28,10 +28,16 @@ def fuzzyCompare(content, pattern):
 			return False
 	return True
 
+def fuzzyRcompare(content, pattern):
+	fuzzyCompare(content[::-1], pattern[::-1])
+
 def regualarIgnoreCaseCompare(content, pattern):
 	return regualarCompare(content, pattern, re.IGNORECASE)
 
 def fuzzyIgnoreCaseCompare(content, pattern):
 	return fuzzyCompare(content.lower(), pattern.lower())
+
+def fuzzyIgnoreCaseRCompare(content, pattern):
+	return fuzzyRcompare(content.lower(), pattern.lower())
 	
 
