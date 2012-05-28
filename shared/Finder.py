@@ -1,3 +1,26 @@
+class Finder:
+	def __init__(self):
+		self.suiteCandidates = []
+		pass
+	def setCandidates():
+		pass
+
+	def addCandidates():
+		pass
+
+	def query(self, word):
+		pass
+
+	def getSuiteCandidate(self, index):
+		try:
+			return self.suiteCandidates[index]
+		except:
+			return None
+
+	def getSuiteCandidateNum(self):
+		return len(self.suiteCandidates)
+
+
 class Query:
 	def __init__(self, pattern, critic, queryContainsCompare = None):
 		self.pattern = pattern
@@ -19,10 +42,10 @@ class Query:
 	def isHappyWith(self, content):		
 		return self.critic(content, self.pattern)
 
-class ScanFinder:
+class ScanFinder(Finder):
 	def __init__(self, candidates, queryCritic, queryContainsCompare = None):
+		Finder.__init__(self)
 		self.candidates = candidates
-		self.suitCandidates= []
 		self.queryCritic= queryCritic
 		self.queryContainsCompare = queryContainsCompare
 		self.lastQuery = None
@@ -34,20 +57,11 @@ class ScanFinder:
 			searchIterms = self.suiteCandidates
 		self.suiteCandidates = filter(lambda iterm : query.isHappyWith(iterm.getContent()), searchIterms)
 		self.lastQuery = query
-		return [iterm.getName() for iterm in self.suiteCandidates]
+		return map(lambda iterm: iterm.getName(), self.suiteCandidates)
 
-	def getSuiteCandidate(self, index):
-		try:
-			return self.suiteCandidates[index]
-		except:
-			return None
-
-	def getSuiteCandidateNum(self):
-		return len(self.suiteCandidates)
-
-class TrieFinder:
+class TrieFinder(Finder):
 	def __init__(self):
-		self.suiteCandidates=[]
+		Finder.__init__(self)
 		self.trieTree = TrieTree()
 
 	def addCandidates(self, candidateList):
@@ -60,14 +74,10 @@ class TrieFinder:
 		self.addCandidates(candidatesList)
 
 	def query(self, word):
-		self.suiteCandidates = self.trieTree.query(word)
+		if not word:
+			return []
+		self.suiteCandidates = self.trieTree.query(word.lower())
 		return [iterm.getName() for iterm in self.suiteCandidates]
-
-	def getSuiteCandidate(self, index):
-		try:
-			return self.suiteCandidates[index]
-		except:
-			return None
 
 class TrieTree:
 	def __init__(self):
@@ -80,10 +90,12 @@ class TrieTree:
 			if node.has_key(w):
 				node = node[w]
 			else:
-				node = None
-				break
+				return []
+		if prefixOfKey == "acceptor.py":
+			print node
 		if node:
 			return self.getValuesOfAllChild(node)
+
 
 	def add(self, key, value):
 		iterator = self.root
@@ -91,15 +103,18 @@ class TrieTree:
 			if not iterator.has_key(char):
 				iterator[char] = {}
 			iterator = iterator[char]
-			iterator[self.leafName] = value
-
+		iterator[self.leafName] = value
+	
 	def getValuesOfAllChild(self, node):
 		values = []
 		#leafNode
 		if node.has_key(self.leafName):
 			values.append(node[self.leafName])
+
 		#internal node
-		values.extend([self.getValuesOfAllChild(node[key]) for key in node.keys()])
+		for key in node.keys():
+			if key != self.leafName:
+				values.extend(self.getValuesOfAllChild(node[key]))
 
 		return values
 

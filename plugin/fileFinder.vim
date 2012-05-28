@@ -53,7 +53,7 @@ class FileCandidateManager:
 				for filePath in files:
 					filePath = os.path.join(root, filePath)
 					fileName = os.path.basename(filePath)
-					item = FileCandidate(name = "%s:\t %s"%(fileName, filePath), content = fileName, filePath = filePath)
+					item = FileCandidate(name = "%s\t %s"%(fileName, filePath), content = fileName.lower(), filePath = filePath)
 					candidateList.append(item)
 		return candidateList
 	

@@ -37,9 +37,9 @@ class FileAcceptor(Acceptor):
 			return self.editFile(fileCandidate)
 
 	def editFile(self, fileCandidate):
-		vim.command("silent e %s"%fileCandidate.getFilePath())
-		#keep it
-		return True
+		vim.command("silent tabedit %s"%fileCandidate.getFilePath())
+		#close the window
+		return False
 
 class LineAcceptor(Acceptor):
 	def __init__(self):
@@ -52,8 +52,8 @@ class LineAcceptor(Acceptor):
 	def editFile(self, lineCandidate):
 		vim.command("silent e %s"%lineCandidate.getFilePath())
 		vim.command("%d"%lineCandidate.getLineNum())
-		#keep the window
-		return True
+		#close the query the window
+		return False
 
 class WorldAcceptor(Acceptor):
 	def __init__(self):
