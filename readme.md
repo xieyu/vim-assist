@@ -25,8 +25,8 @@ to move cursor, and Ctrl+w to del word. Just try and enjoy it!
 	
 
 
-##How to write extension
-well, There lots of things to be find, tags, functions, symbols and so on. you can easylly write an extension for it like filefinder,
+##Write extension
+well, There're lots of things to be find, tags, functions, symbols and so on. you can easylly write an extension for it like filefinder,
 ###Concepts:
 There several Class in this packet:
 * Candidate is a basic record for search, It's member name will be shown to user, and it's member content used for search
