@@ -35,11 +35,14 @@ class FileAcceptor(Acceptor):
 	def accept(self, fileCandidate, options = None):
 		if options is None:
 			return self.editFile(fileCandidate)
+	def selectWindow(self):
+		vim.command("wincmd w") #try next window
 
 	def editFile(self, fileCandidate):
-		vim.command("silent tabedit %s"%fileCandidate.getFilePath())
+		self.selectWindow()
+		vim.command("silent e %s"%fileCandidate.getFilePath())
 		#close the window
-		return True
+		return False
 
 class LineAcceptor(Acceptor):
 	def __init__(self):
