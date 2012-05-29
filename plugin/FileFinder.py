@@ -10,6 +10,7 @@ class FileFinder:
 		self.candidateManager = FileCandidateManager(reposFile)
 		self.finder = TrieFinder()
 		self.acceptor = Acceptor.FileAcceptor()
+		self.lock = threading.Lock()
 		self.refresh()
 
 	def refresh(self):
@@ -17,15 +18,17 @@ class FileFinder:
 		threading.Thread(target = self.doRefresh).start()
 
 	def doRefresh(self):
+		self.lock.acquire()
 		self.candidateManager.refresh()
 		candidates = self.candidateManager.getCachedCandidates()
 		self.finder.setCandidates(candidates)
-		print "refresh is done"
+		print "file finder refresh is done :)"
 		self.IsReady = True
+		self.lock.release()
 	
 	def find(self):
 		if not self.IsReady:
-			print "scaning files, not ready yet :(, why not have a coffee break now.."
+			print "Hi, I'm scaning file, you can have a break :D" 
 			return
 		matcher = SharedFactory.getMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
 		matcher.show()
@@ -38,14 +41,19 @@ class FileCandidateManager:
 		self.cachedCandidates = []
 
 	def parse(self, reposFile):
-		return [line.strip()  for line in open(reposFile).readlines() if line.strip()[0]!="#"]
+		try:
+			lines = open(reposFile).readlines()
+		except:
+			print "your repose is empty, try use command FinderEditRepos"
+			return
+		return [line.strip()  for line in lines if line.strip() and line.strip()[0]!="#"]
 
 	def refresh(self):
+		self.rootPathList = self.parse(self.reposFile)
 		if self.rootPathList is None:
 			return None
-		self.cachedCandidateList = []
+		self.cachedCandidates = []
 		for rootPath in self.rootPathList:
-			print rootPath
 			if not os.path.exists(rootPath):
 				print "%s is not exists"%rootPath
 			for root, dirs, files in os.walk(rootPath):
@@ -54,8 +62,7 @@ class FileCandidateManager:
 					fileName = os.path.basename(filePath)
 					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), content = fileName.lower(), filePath = filePath)
 					self.cachedCandidates.append(iterm)
-		return self.cachedCandidates
 	
 	def getCachedCandidates(self):
-		return self.cachedCandidateList	
+		return self.cachedCandidates	
 

@@ -1,18 +1,29 @@
 "Descrption: vim plugins for Find files in bundles
 "Author:     xieyu3 at gmail dot com
 "
+"FileFinder is used for quick edit file just like sublime's command-p under
+"certain Dirs, you "can set Dirs paths that will be searched, and quick find files by it's
+"prefix.(currently just support prefix, maybe next version will support
+"subString);
+"
+"intereface for user:
+"
 "Commands:
 "
-"Options:
-"
+"use EditFinderRepos to edit the dirs paths that will be searched
+command EditFinderRepos py editReposFile()
+
+"use RefreshFinderRepos, if files under dirs has been changed
+command RefreshFinderRepos py refresh()
+
+"find files by prefix of filename
+command FinderFile py find()
+
+
 "Maps:
-map <C-b> :py refresh()<CR>
-map <C-f> :py find()<CR>
+map <C-f> :FinderFile<CR>
 
 
-if !exists("g:reposFile")
-	let g:reposFile = "/Users/ic/.vim/bundle/finder/reposPaths"
-endif
 
 python<<EOF
 import os
@@ -28,11 +39,22 @@ scriptdir = os.path.dirname(vim.eval('expand("<sfile>")'))
 if scriptdir not in sys.path:
     sys.path.insert(0, scriptdir)
 
+#get repos file path
+def getReposFilePath():
+	reposPaths = os.path.join(scriptdir, "reposPaths")
+	return reposPaths
+
+
+def editReposFile():
+	vim.command("sp %s"%getReposFilePath()) 
+	vim.command("autocmd BufWritePost <buffer> py refresh()")
+
 from FileFinder import FileFinder
+#must import SharedFactory in *.vim file, see its doc for reason
 from Factory import SharedFactory
 
-reposFile = vim.eval("g:reposFile")
-filefinder = FileFinder(reposFile)
+reposFilePaths = getReposFilePath()
+filefinder = FileFinder(reposFilePaths)
 
 def find():
 	filefinder.find()
