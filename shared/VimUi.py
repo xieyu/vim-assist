@@ -20,10 +20,21 @@ class Widget:
 
 	def close(self):
 		#have bugs here, need make sure that current buffer is self.
+		initial = vim.current.window
+		for i in range(len(vim.windows)):
+			vim.command("wincmd w")
+			if vim.current.window == self.vimWindow:
+				break
 		try:
 			vim.command("noa bun!")
 		except:
 			vim.command("noa close!")
+
+		for i in range(len(vim.windows)):
+			vim.command("wincmd w")
+			if vim.current.window == initial:
+				break
+
 	
 	def show(self):
 		vim.command("noa keepa bo 5new %s"%self.bufferName) 
