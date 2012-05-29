@@ -19,6 +19,7 @@ class Widget:
 		self.vimWindow = None
 
 	def close(self):
+		#have bugs here, need make sure that current buffer is self.
 		try:
 			vim.command("noa bun!")
 		except:
@@ -180,6 +181,7 @@ class PromptWindow(Window):
 
 	def reNew(self, title, listener):
 		Window.reNew(self, title)
+		self.prompt.clear()
 		self.prompt.setListener(listener)
 		self.makeKeysMap()
 
@@ -216,6 +218,10 @@ class Prompt:
 	def __init__(self, listener):
 		self.content=[]
 		self.listener = listener
+		self.col = 0
+	
+	def clear(self):
+		self.content=[]
 		self.col = 0
 	
 	def setListener(self, listener):

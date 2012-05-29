@@ -39,7 +39,7 @@ class FileAcceptor(Acceptor):
 	def editFile(self, fileCandidate):
 		vim.command("silent tabedit %s"%fileCandidate.getFilePath())
 		#close the window
-		return False
+		return True
 
 class LineAcceptor(Acceptor):
 	def __init__(self):
