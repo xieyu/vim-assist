@@ -15,8 +15,8 @@ class MatchController:
 				}
 		#command: [(keys,pramasList),(keys,  paramList)...]
 		self.keysMap = {
-				"selectPre":[(["<C-j>","<C-p>", "<Up>"], "pre")],
-				"selectNext":[(["<C-n>","<Down>"], "down")],
+				"selectPre":[(["<C-k>","<C-p>", "<Up>"], "pre")],
+				"selectNext":[(["<C-j>", "<C-n>","<Down>"], "next")],
 				"nextPage": [(["<C-d>", "<PageDown>"], "nextPage")],
 				"prePage" : [(["<C-u>", "<PageUp>"], "prePage")],
 				"acceptSelect": [(["<cr>","<2-LeftMouse>"], "None")]
@@ -67,7 +67,6 @@ class MatchController:
 			return
 		self.curSelect = max(min(self.curSelect + step, self.finder.getSuiteCandidateNum() -1), 0)
 		#note: vim lineNum start with 1, not zero.
-		print self.curSelect
 		self.window.setCursor(self.curSelect + 1, 0)
 
 
