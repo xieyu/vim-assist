@@ -74,6 +74,7 @@ class TrieFinder(Finder):
 		self.addCandidates(candidatesList)
 
 	def query(self, word):
+		print word
 		if not word:
 			return []
 		self.suiteCandidates = self.trieTree.query(word.lower())
