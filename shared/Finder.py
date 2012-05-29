@@ -103,13 +103,16 @@ class TrieTree:
 			if not iterator.has_key(char):
 				iterator[char] = {}
 			iterator = iterator[char]
-		iterator[self.leafName] = value
+		if iterator.has_key(self.leafName):
+			iterator[self.leafName].append(value)
+		else:
+			iterator[self.leafName] = [value]
 	
 	def getValuesOfAllChild(self, node):
 		values = []
 		#leafNode
 		if node.has_key(self.leafName):
-			values.append(node[self.leafName])
+			values.extend(node[self.leafName])
 
 		#internal node
 		for key in node.keys():
