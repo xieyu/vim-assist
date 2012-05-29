@@ -7,8 +7,10 @@ finder is a  plugin for vim, which make write extension for immedidate search
 * easy to write extension
 
 ##useage
+###install
+* use pathgon to install it see <a href="https://github.com/tpope/vim-pathogen">pathgon</a> for details
+
 ###commands:
-* use pathgon to install it see <a href="https://github.com/tpope/vim-pathogen">ref</a> for details
 * use command EditFinderRepos to add dirs that you want to search
 * use command RefreshFinderRepos to refresh index, if there are some changed under these dirs
 * command FinderFile will begin search
