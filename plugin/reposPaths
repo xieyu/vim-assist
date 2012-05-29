@@ -1,0 +1,5 @@
+#add abs path of dir that you want find here
+#line start with '#' will be treated as comments
+#/Users/ic/codes/macvim
+#/Users/ic/codes/clang/
+
