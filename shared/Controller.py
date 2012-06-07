@@ -1,4 +1,4 @@
-
+import vim
 class MatchController:
 	def __init__(self, selfName):
 		'''
@@ -21,6 +21,8 @@ class MatchController:
 				"prePage" : [(["<C-u>", "<PageUp>"], "prePage")],
 				"acceptSelect": [(["<cr>","<2-LeftMouse>"], "None")]
 		}
+		self.preview = False
+		self.matchHight = None
 
 	def reNew(self, title, finder, acceptor, window):
 		self.window = window
@@ -29,7 +31,8 @@ class MatchController:
 		self.acceptor = acceptor
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		self.curSelect = 0
-
+		self.preview = False
+		self.matchHight = False
 
 	def addKeyMapForCommand(self, com, keys, param):
 		'''
@@ -50,6 +53,12 @@ class MatchController:
 		except:
 			print "except when setKeysMapForCommand"
 
+	def setPreview(self, preview):
+		self.preview = True
+
+	def setMatchHighlight(self, highlight):
+		self.matchHight = highlight
+
 	def show(self):
 		self.makeKeyMap()
 		self.window.show()
@@ -58,6 +67,11 @@ class MatchController:
 	def userInputListener(self, userInput):
 		result = self.finder.query(userInput)
 		self.window.setContent(result)
+		if self.matchHight:
+			vim.command("match %s /\c%s/"%(self.matchHight, userInput))
+		if self.preview:
+			self.acceptSelect("preview")
+
 
 	def moveSelect(self, stepDescripte):
 		stepsMap = {"next":1, "pre": -1, "nextPage":self.getCandidateNumOnOnePage(), "prePage": -1*self.getCandidateNumOnOnePage()}
@@ -68,6 +82,9 @@ class MatchController:
 		self.curSelect = max(min(self.curSelect + step, self.finder.getSuiteCandidateNum() -1), 0)
 		#note: vim lineNum start with 1, not zero.
 		self.window.setCursor(self.curSelect + 1, 0)
+
+		if self.preview:
+			self.acceptSelect("preview")
 
 
 	def acceptSelect(self, acceptWay):

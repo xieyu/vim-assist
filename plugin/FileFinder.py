@@ -1,5 +1,6 @@
 import os
 import threading
+
 from Factory import SharedFactory
 from Finder import TrieFinder
 from Candidates import FileCandidate

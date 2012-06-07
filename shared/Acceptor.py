@@ -50,16 +50,24 @@ class LineAcceptor(Acceptor):
 		pass
 
 	def accept(self, lineCandidate, options = None):
-		if options is None:
-			return self.editFile(lineCandidate)
-
-	def selectWindow(self):
+		curwin = vim.eval("winnr()")
 		vim.command("wincmd w") #try next window
-
-	def editFile(self, lineCandidate):
-		self.selectWindow()
 		vim.command("silent e %s"%lineCandidate.getFilePath())
 		vim.command("%d"%lineCandidate.getLineNum())
+		vim.command("normal zz")
+		vim.command("hi acceptline guifg=red")
+		if options == "preview":
+			currentline = vim.eval("getline('.')")
+			try:
+				vim.command('''silent match acceptline /\c%s/'''%currentline)
+			except:
+				pass
+			#jump back to match window
+			vim.command("%s wincmd w"%curwin)
+			return True
+		#TODO:kill the Highlight
+		return False
+
 		#close the query the window
 		return False
 

@@ -15,6 +15,7 @@ class CurrentBufferLineFinder:
 		candidates = self.candidateManager.get_current_buffer_sybmol_candidates()
 		self.finder.setCandidates(candidates)
 		matcher = SharedFactory.getMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
+		matcher.setPreview(True)
 		matcher.show()
 
 class LineCandidateManager:
