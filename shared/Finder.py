@@ -39,23 +39,26 @@ class Query:
 			return self.queryContainsCompare(self.pattern, anotherQuery.pattern)
 		return False
 
-	def isHappyWith(self, content):		
-		return self.critic(content, self.pattern)
+	def isHappyWith(self, Key):		
+		return self.critic(Key, self.pattern)
 
 class ScanFinder(Finder):
-	def __init__(self, candidates, queryCritic, queryContainsCompare = None):
+	def __init__(self, queryCritic, queryContainsCompare = None):
 		Finder.__init__(self)
-		self.candidates = candidates
+		self.candidates = []
 		self.queryCritic= queryCritic
 		self.queryContainsCompare = queryContainsCompare
 		self.lastQuery = None
+
+	def setCandidates(self, candidates):
+		self.candidates = candidates
 
 	def query(self, userInput):
 		query = Query(userInput, self.queryCritic, self.queryContainsCompare)
 		searchIterms = self.candidates
 		if self.lastQuery and query.contains(self.lastQuery):
 			searchIterms = self.suiteCandidates
-		self.suiteCandidates = filter(lambda iterm : query.isHappyWith(iterm.getContent()), searchIterms)
+		self.suiteCandidates = filter(lambda iterm : query.isHappyWith(iterm.getKey()), searchIterms)
 		self.lastQuery = query
 		return map(lambda iterm: iterm.getName(), self.suiteCandidates)
 
@@ -66,7 +69,7 @@ class TrieFinder(Finder):
 
 	def addCandidates(self, candidateList):
 		for candidate in candidateList:
-			self.trieTree.add(candidate.getContent(), candidate)
+			self.trieTree.add(candidate.getKey(), candidate)
 	
 	def setCandidates(self, candidatesList):
 		self.trieTree = TrieTree()
@@ -95,7 +98,6 @@ class TrieTree:
 			print node
 		if node:
 			return self.getValuesOfAllChild(node)
-
 
 	def add(self, key, value):
 		iterator = self.root

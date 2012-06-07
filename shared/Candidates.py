@@ -1,18 +1,18 @@
 class Candidate:
-	def __init__(self, name, content):
-		'''name is the string that will show to user, content is used for compare and search,'''
+	def __init__(self, name, key):
+		'''name is the string that will show to user, key is used for compare and search,'''
 		self.name = name
-		self.content = content
+		self.key = key
 	
 	def getName(self):
 		return self.name
 
-	def getContent(self):
-		return self.content
+	def getKey(self):
+		return self.key
 
 class FileCandidate(Candidate):
-	def __init__(self, name, content, filePath):
-		Candidate.__init__(self, name, content)
+	def __init__(self, name, key, filePath):
+		Candidate.__init__(self, name, key)
 		self.filePath = filePath
 		pass
 		
@@ -20,16 +20,17 @@ class FileCandidate(Candidate):
 		return self.filePath
 
 class LineCandidate(FileCandidate):
-	def __init__(self, name, content, filePath, lineNum):
-		FileCandidate.__init__(self, name, content, filePath)
+	def __init__(self, name, key, filePath, lineNum):
+		FileCandidate.__init__(self, name, key, filePath)
 		self.lineNum = lineNum
 
 	def getLineNum(self):
 		return self.lineNum
 
-class WordCandidate(LineCandidate):
-	def __init__(self, name, content, filePath, lineNum, wordPos):
-		LineCandidate.__init__(self, name, content, filePath, lineNum)
+class SymbolCandidate(LineCandidate):
+	def __init__(self, name, key, filePath, lineNum, wordPos):
+		LineCandidate.__init__(self, name, key, filePath, lineNum)
 		self.wordPos = wordPos
+
 	def getWordPos(self):
 		return self.wordPos

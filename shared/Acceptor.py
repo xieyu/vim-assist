@@ -35,6 +35,7 @@ class FileAcceptor(Acceptor):
 	def accept(self, fileCandidate, options = None):
 		if options is None:
 			return self.editFile(fileCandidate)
+
 	def selectWindow(self):
 		vim.command("wincmd w") #try next window
 
@@ -52,7 +53,11 @@ class LineAcceptor(Acceptor):
 		if options is None:
 			return self.editFile(lineCandidate)
 
+	def selectWindow(self):
+		vim.command("wincmd w") #try next window
+
 	def editFile(self, lineCandidate):
+		self.selectWindow()
 		vim.command("silent e %s"%lineCandidate.getFilePath())
 		vim.command("%d"%lineCandidate.getLineNum())
 		#close the query the window

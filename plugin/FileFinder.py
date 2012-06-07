@@ -27,9 +27,6 @@ class FileFinder:
 		self.lock.release()
 	
 	def find(self):
-		if not self.IsReady:
-			print "Hi, I'm scaning file, you can have a break :D" 
-			return
 		matcher = SharedFactory.getMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
 		matcher.show()
 
@@ -60,7 +57,7 @@ class FileCandidateManager:
 				for filePath in files:
 					filePath = os.path.join(root, filePath)
 					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), content = fileName.lower(), filePath = filePath)
+					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName.lower(), filePath = filePath)
 					self.cachedCandidates.append(iterm)
 	
 	def getCachedCandidates(self):
