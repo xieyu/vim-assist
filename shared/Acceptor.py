@@ -55,17 +55,9 @@ class LineAcceptor(Acceptor):
 		vim.command("silent e %s"%lineCandidate.getFilePath())
 		vim.command("%d"%lineCandidate.getLineNum())
 		vim.command("normal zz")
-		vim.command("hi acceptline guifg=red")
 		if options == "preview":
-			currentline = vim.eval("getline('.')")
-			try:
-				vim.command('''silent match acceptline /\c%s/'''%currentline)
-			except:
-				pass
-			#jump back to match window
 			vim.command("%s wincmd w"%curwin)
 			return True
-		#TODO:kill the Highlight
 		return False
 
 		#close the query the window
