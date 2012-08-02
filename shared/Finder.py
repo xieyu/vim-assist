@@ -1,15 +1,15 @@
 class Finder:
 	def __init__(self):
 		self.suiteCandidates = []
-		pass
-	def setCandidates():
-		pass
 
-	def addCandidates():
-		pass
+	def setCandidates():
+		assert not "Not implement"
+
+	def addCandidates(candidates):
+		assert not "Not implement"
 
 	def query(self, word):
-		pass
+		assert not "Not implement"
 
 	def getSuiteCandidate(self, index):
 		try:

@@ -57,7 +57,7 @@ class MatchController:
 	#private
 	def userInputListener(self, userInput):
 		result = self.finder.query(userInput)
-		self.window.setContent(result)
+		self.window.setContent(map(lambda iterm: iterm.getName(), result))
 
 	def moveSelect(self, stepDescripte):
 		stepsMap = {"next":1, "pre": -1, "nextPage":self.getCandidateNumOnOnePage(), "prePage": -1*self.getCandidateNumOnOnePage()}

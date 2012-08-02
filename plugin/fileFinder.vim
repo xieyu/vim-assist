@@ -49,16 +49,16 @@ def editReposFile():
 	vim.command("sp %s"%getReposFilePath()) 
 	vim.command("autocmd BufWritePost <buffer> py refresh()")
 
-from FileFinder import FileFinder
+from FileFinder import FileFinderDriver
 #must import SharedFactory in *.vim file, see its doc for reason
 from Factory import SharedFactory
 
 reposFilePaths = getReposFilePath()
-filefinder = FileFinder(reposFilePaths)
+filefinderDriver = FileFinderDriver(reposFilePaths)
 
 def find():
-	filefinder.find()
+	filefinderDriver.run()
 
 def refresh():
-	filefinder.refresh()
+	filefinderDriver.refresh()
 EOF
