@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 import vim
 from Factory import SharedFactory
@@ -82,6 +83,7 @@ class FileFinder(Finder):
 		Finder.__init__(self)
 		self.candidates = []
 		self.lastQuery = None
+		self.pathMatchsCache = {}
 
 	def addCandidates(self, fileCandidates):
 		self.candidates.extend(fileCandidates)
@@ -115,35 +117,49 @@ class FileFinder(Finder):
 		#searchResult.extend(result)
 		return searchResult
 
-	def getPattern(self, userInput):
-		r = userInput.split("/")
-		filePattern = r[-1]
-		if len(r) == 1:
-			dirPatterns = []
+	def getPattern(self, pattern):
+		pathPart = pattern.split("/")
+		fileNamePart = pathPart.pop() 
+		pathRegex = None
+		fileRegex = None
+		if pathPart:
+			pathRegexRaw = "^(.*?)" + [self.makePattern(part) for part in pathPart].join("(.*?/.*?/") + "(.*?)$"
+			pathRegex = re.compile(pathRegexRaw, re.IGNORECASE)
+
+		fileRegexRaw = "^(.*?)" + self.makePattern(fileNamePart) + "(.*)$"
+		fileRegex = re.compile(fileRegexRaw, re.IGNORECASE)
+
+		return pathRegex,fileRegex
+
+
+	def makePattern(self, pattern):
+		if pattern is "":
+			return ""
+		regex = None
+		for character in pattern:
+			regex = regex and regex + "([^/]*?)"
+			regex = regex + "(%s)"%(re.escape(character))
+		return regex
+
+	def matchPath(self, path, pathRegex, pathSegments):
+		if self.pathMatchsCache.has_key(path):
+			return self.pathMatchsCache[path]
+		matchablePath = path
+		if pathRegex:
+			match = pathRegex.match(path)
+			self.pathMatchsCache[path] = match and self.buildMatchResult(match, pathSegments) or {"score":1, "result":matchablePath, "missed":True}
 		else:
-			dirPatterns = r[:len(r)-1]
-		return dirPatterns, filePattern
+			self.pathMatchsCache[path] ={"score":1, "result":matchablePath}
 
-	def editDistance(self, strA, strB):
-		def isModify(i, j):
-			return strA[i] == strB[j] and 0 or 1;
+	def matchFile(self):
+		pass
 
-		def edit(i, j):
-			if i == 0 and j == 0:
-				return isModify(i, j)
-			elif i == 0 or j == 0:
-				if j > 0:
-					return isModify(i,j) and edit(i, j-1)+1 or j
-				else:
-					return isModify(i,j) and edit(i-1, j)+1 or i
-			else:
-				return min([edit(i-1, j)+1, edit(i,j-1)+1, edit(i-1, j-1), isModify(i,j)])
-		return edit(len(strA) -1, len(strB)-1)
+	def buildMatchResult(self):
+		pass
+
 
 	def match(self, pattern, item):
-		patternLower = pattern.lower()
-		itemLower = item.lower()
-		return patternLower in itemLower
+		pass
 
 
 class FileAcceptor(Acceptor):
