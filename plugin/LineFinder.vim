@@ -16,9 +16,9 @@ if scriptdir not in sys.path:
     sys.path.insert(0, scriptdir)
 from Factory import SharedFactory
 
-from LineFinder import CurrentBufferLineFinder
-lineFinder = CurrentBufferLineFinder()
+from LineFinder import LineFinderDriver
+lineFinder = LineFinderDriver()
 
 def findinLine():
-	lineFinder.find()
+	lineFinder.run()
 EOF

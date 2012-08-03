@@ -1,9 +1,8 @@
 import os
-import re
 import threading
 import vim
 from Factory import SharedFactory
-from Finder import Finder
+from Finder import TrieFinder
 from Candidates import Candidate
 from Acceptor import Acceptor
 
@@ -11,12 +10,12 @@ class FileFinderDriver:
 	def __init__(self, reposFile):
 		self.candidateManager = FileCandidateManager(reposFile)
 		self.finder = FileFinder()
+		self.finder.setIgnoreCase()
 		self.acceptor = FileAcceptor()
 		self.lock = threading.Lock()
-		#self.refresh()
+		self.refresh()
 
 	def refresh(self):
-		self.IsReady = False
 		threading.Thread(target = self.doRefresh).start()
 
 	def doRefresh(self):
@@ -25,21 +24,21 @@ class FileFinderDriver:
 		candidates = self.candidateManager.getCachedCandidates()
 		self.finder.setCandidates(candidates)
 		print "file finder refresh is done :)"
-		self.IsReady = True
 		self.lock.release()
 	
 	def run(self):
-		matcher = SharedFactory.getMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
-		matcher.show()
+		matcher = SharedFactory.getPromptMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
+		matcher.run()
+
 
 class FileCandidate(Candidate):
-	def __init__(self, name, key, filePath):
+	def __init__(self, name, key, path):
 		Candidate.__init__(self, name, key)
-		self.filePath = filePath
+		self.path = path
 		pass
 		
 	def getPath(self):
-		return self.filePath
+		return self.path
 
 class FileCandidateManager:
 	def __init__(self, reposFile):
@@ -69,7 +68,7 @@ class FileCandidateManager:
 					if  self.pathShouldIgnore(filePath):
 						continue
 					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName.lower(), filePath = filePath)
+					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
 	
 	def pathShouldIgnore(self, filePath):
@@ -78,96 +77,41 @@ class FileCandidateManager:
 	def getCachedCandidates(self):
 		return self.cachedCandidates	
 
-class FileFinder(Finder):
-	def __init__(self):
-		Finder.__init__(self)
-		self.candidates = []
-		self.lastQuery = None
-		self.pathMatchsCache = {}
+	@staticmethod
+	def getBufferCandidates():
+		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
+		def createCandidate(buf):
+			filePath = buf.name
+			fileName = os.path.basename(filePath)
+			return FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName, path = filePath)
+		return map(createCandidate, buffers)
 
-	def addCandidates(self, fileCandidates):
-		self.candidates.extend(fileCandidates)
+	@staticmethod
+	def getRecentlyCandidates():
+		return []
 
-	def setCandidates(self, fileCandidates):
-		self.candidates = fileCandidates
+	@staticmethod
+	def addToRecentCandidates(fileCandidate):
+		pass
 
+class FileFinder(TrieFinder):
 	def query(self, userInput):
-		searchItems = self.candidates
-		if self.lastQuery and self.match(self.lastQuery, userInput):
-			searchItems = self.suiteCandidates
-		self.suiteCandidates = self.doQuery(userInput, searchItems)
-		self.lastQuery = userInput
-		return self.suiteCandidates
+		return self.queryRecent(userInput) + TrieFinder.query(self, userInput)
 
-	def doQuery(self, userInput, fileCandidates):
-		dirNamePattern, fileNamePattern = self.getPattern(userInput)
-		result = []
-		for fileCandidate in fileCandidates:
-			path = fileCandidate.getPath()
-			if fileNamePattern and self.match(fileNamePattern, os.path.basename(path)):
-				result.append(fileCandidate)
-		searchResult = sorted(result, key = lambda fileCandidate: self.editDistance(userInput, os.path.basename(fileCandidate.getPath())))
-
-		result = []
-		for fileCandidate in fileCandidates:
-			path = fileCandidate.getPath()
-			if dirNamePattern and self.match(dirNamePattern, os.path.dirname(path)):
-				result.append(fileCandidate)
-		searchResult.extend(sorted(result, key = lambda fileCandidate: self.editDistance(userInput, os.path.dirname(fileCandidate.getPath()))))
-		#searchResult.extend(result)
-		return searchResult
-
-	def getPattern(self, pattern):
-		pathPart = pattern.split("/")
-		fileNamePart = pathPart.pop() 
-		pathRegex = None
-		fileRegex = None
-		if pathPart:
-			pathRegexRaw = "^(.*?)" + [self.makePattern(part) for part in pathPart].join("(.*?/.*?/") + "(.*?)$"
-			pathRegex = re.compile(pathRegexRaw, re.IGNORECASE)
-
-		fileRegexRaw = "^(.*?)" + self.makePattern(fileNamePart) + "(.*)$"
-		fileRegex = re.compile(fileRegexRaw, re.IGNORECASE)
-
-		return pathRegex,fileRegex
-
-
-	def makePattern(self, pattern):
-		if pattern is "":
-			return ""
-		regex = None
-		for character in pattern:
-			regex = regex and regex + "([^/]*?)"
-			regex = regex + "(%s)"%(re.escape(character))
-		return regex
-
-	def matchPath(self, path, pathRegex, pathSegments):
-		if self.pathMatchsCache.has_key(path):
-			return self.pathMatchsCache[path]
-		matchablePath = path
-		if pathRegex:
-			match = pathRegex.match(path)
-			self.pathMatchsCache[path] = match and self.buildMatchResult(match, pathSegments) or {"score":1, "result":matchablePath, "missed":True}
-		else:
-			self.pathMatchsCache[path] ={"score":1, "result":matchablePath}
-
-	def matchFile(self):
-		pass
-
-	def buildMatchResult(self):
-		pass
-
-
-	def match(self, pattern, item):
-		pass
-
+	def queryRecent(self, userInput):
+		candidates = FileCandidateManager.getBufferCandidates() + FileCandidateManager.getRecentlyCandidates()
+		def match(candidate):
+			return userInput is "" or userInput.lower() in os.path.basename(candidate.getPath()).lower()
+		return filter(match, candidates)
+		
 
 class FileAcceptor(Acceptor):
 	def __init__(self):
 		pass
 
 	def accept(self, fileCandidate, options = None):
-		if options is None:
+		if options is "None":
+			FileCandidateManager.addToRecentCandidates(fileCandidate)
 			return self.editFile(fileCandidate)
 
 	def selectWindow(self):

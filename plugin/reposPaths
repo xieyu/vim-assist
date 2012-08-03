@@ -1,3 +1,5 @@
 #add abs path of dir that you want find here
 #line start with '#' will be treated as comments
-/Users/ic/.vim/bundle
+#/Users/ic/.vim/bundle
+d:/tools/vim/vimfiles
+h:/reksio-6/

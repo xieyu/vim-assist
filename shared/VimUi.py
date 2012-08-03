@@ -118,6 +118,9 @@ class Widget:
 	def unlock(self):
 		vim.command("setlocal modifiable")
 
+	def redraw(self):
+		vim.command("redraw")
+
 #Window that can register key map
 class Window(Widget):
 	def __init__(self, selfName, title=None):
@@ -134,7 +137,7 @@ class Window(Widget):
 	def setSelfName(self, selfName):
 		self.selfName = selfName
 
-	def reNew(self, title):
+	def renew(self, title):
 		Widget.__init__(self, title)
 		self.keyMaps = []
 
@@ -169,7 +172,8 @@ class PromptWindow(Window):
 		self.settingScope = "PromptWindow"
 		self.prompt = Prompt(listener)
 		#command: function
-		self.commandMap ={"cancel":self.close,
+		self.commandMap ={
+				"cancel":self.close,
 				"bs": self.prompt.backspace,
 				"del":self.prompt.delete,
 				"delWord" :self.prompt.delWord,
@@ -190,8 +194,8 @@ class PromptWindow(Window):
 				"end": ["<c-e>"],
 			}
 
-	def reNew(self, title, listener):
-		Window.reNew(self, title)
+	def renew(self, title, listener):
+		Window.renew(self, title)
 		self.prompt.clear()
 		self.prompt.setListener(listener)
 		self.makeKeysMap()
@@ -225,6 +229,9 @@ class PromptWindow(Window):
 	def doCommand(self, com):
 		self.commandMap[com]()
 
+	def redraw(self):
+		self.prompt.redraw()
+
 class Prompt:
 	def __init__(self, listener):
 		self.content=[]
@@ -234,6 +241,7 @@ class Prompt:
 	def clear(self):
 		self.content=[]
 		self.col = 0
+		self.redraw()
 	
 	def setListener(self, listener):
 		self.listener = listener
@@ -243,11 +251,6 @@ class Prompt:
 		self.moveCursor(1)
 		self.redraw()
 		self.notify()
-
-	def clear(self):
-		self.content=[]
-		self.col = 0
-		self.redraw()
 
 	def backspace(self):
 		if self.col > 0:

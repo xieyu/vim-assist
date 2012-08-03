@@ -22,46 +22,11 @@ in matchController the default key map that will triger accept is <cr>, and defa
 class Acceptor:
 	def __init__(self):
 		pass
-	def getKeysMap():
-		"should return a dic {'key':'param',} or None"
-		return None
+	def getKeysMap(self):
+		return {"<cr>":"None","<2-LeftMouse>":"None"}
 	def accept(self, candidate, param):
 		pass
 
-class FileAcceptor(Acceptor):
-	def __init__(self):
-		pass
-
-	def accept(self, fileCandidate, options = None):
-		if options is None:
-			return self.editFile(fileCandidate)
-
-	def selectWindow(self):
-		vim.command("wincmd w") #try next window
-
-	def editFile(self, fileCandidate):
-		self.selectWindow()
-		vim.command("silent e %s"%fileCandidate.getFilePath())
-		#close the window
-		return False
-
-class LineAcceptor(Acceptor):
-	def __init__(self):
-		pass
-
-	def accept(self, lineCandidate, options = None):
-		if options is None:
-			return self.editFile(lineCandidate)
-
-	def selectWindow(self):
-		vim.command("wincmd w") #try next window
-
-	def editFile(self, lineCandidate):
-		self.selectWindow()
-		vim.command("silent e %s"%lineCandidate.getFilePath())
-		vim.command("%d"%lineCandidate.getLineNum())
-		#close the query the window
-		return False
 
 class WorldAcceptor(Acceptor):
 	def __init__(self):

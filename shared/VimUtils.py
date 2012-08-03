@@ -14,8 +14,7 @@ def getCurLineNum():
 	(row, col) = vim.current.window.cursor
 	return row
 
-def error(msg):
-	# FIXME:does vim has exit function ?
+def echo(msg):
 	vim.command('''echo "%s"'''%msg)
 	vim.command("redraw")
 

@@ -1,86 +1,51 @@
 class Finder:
 	def __init__(self):
-		self.suiteCandidates = []
+		pass
 
-	def setCandidates():
+	def query(self, key):
 		assert not "Not implement"
 
-	def addCandidates(candidates):
-		assert not "Not implement"
-
-	def query(self, word):
-		assert not "Not implement"
-
-	def getSuiteCandidate(self, index):
-		try:
-			return self.suiteCandidates[index]
-		except:
-			return None
-
-	def getSuiteCandidateNum(self):
-		return len(self.suiteCandidates)
-
-
-class Query:
-	def __init__(self, pattern, critic, queryContainsCompare = None):
-		self.pattern = pattern
-		self.critic = critic
-		self.queryContainsCompare = queryContainsCompare
-
-	def getPattern(self):
-		return self.pattern
-
-	def setPattern(self, pattern):
-		self.pattern = pattern
-
-	def contains(self, anotherQuery):
-		"use for Optimize search"
-		if self.queryContainsCompare:
-			return self.queryContainsCompare(self.pattern, anotherQuery.pattern)
-		return False
-
-	def isHappyWith(self, Key):		
-		return self.critic(Key, self.pattern)
 
 class ScanFinder(Finder):
-	def __init__(self, queryCritic, queryContainsCompare = None):
+	def __init__(self, match):
 		Finder.__init__(self)
 		self.candidates = []
-		self.queryCritic= queryCritic
-		self.queryContainsCompare = queryContainsCompare
+		self.match = match
 		self.lastQuery = None
+		self.containMatch = None
 
 	def setCandidates(self, candidates):
 		self.candidates = candidates
 
-	def query(self, userInput):
-		query = Query(userInput, self.queryCritic, self.queryContainsCompare)
-		searchIterms = self.candidates
-		if self.lastQuery and query.contains(self.lastQuery):
-			searchIterms = self.suiteCandidates
-		self.suiteCandidates = filter(lambda iterm : query.isHappyWith(iterm.getKey()), searchIterms)
-		self.lastQuery = query
-		return map(lambda iterm: iterm.getName(), self.suiteCandidates)
+	def addCandidates(self, candidates):
+		self.candidates.extend(candidates)
+
+	def query(self, key):
+		return filter(lambda item : self.match(key, item), self.candidates)
 
 class TrieFinder(Finder):
 	def __init__(self):
 		Finder.__init__(self)
 		self.trieTree = TrieTree()
+		self.ignoreCase = False
 
-	def addCandidates(self, candidateList):
-		for candidate in candidateList:
-			self.trieTree.add(candidate.getKey(), candidate)
+	def setIgnoreCase(self):
+		self.ignoreCase = True
+
+	def addCandidates(self, candidates):
+		for candidate in candidates:
+			key = self.ignoreCase and candidate.getKey().lower() or candidate.getKey()
+			self.trieTree.add(key, candidate)
 	
-	def setCandidates(self, candidatesList):
+	def setCandidates(self, candidates):
 		self.trieTree = TrieTree()
-		self.suiteCandidates = []
-		self.addCandidates(candidatesList)
+		self.addCandidates(candidates)
 
 	def query(self, word):
 		if not word:
 			return []
-		self.suiteCandidates = self.trieTree.query(word.lower())
-		return [iterm.getName() for iterm in self.suiteCandidates]
+		word = self.ignoreCase and word.lower() or word
+		return self.trieTree.query(word)
 
 class TrieTree:
 	def __init__(self):
@@ -94,8 +59,6 @@ class TrieTree:
 				node = node[w]
 			else:
 				return []
-		if prefixOfKey == "acceptor.py":
-			print node
 		if node:
 			return self.getValuesOfAllChild(node)
 
@@ -122,29 +85,4 @@ class TrieTree:
 				values.extend(self.getValuesOfAllChild(node[key]))
 
 		return values
-
-class SuffixTree:
-	class Node:
-		pass
-
-	def __init__(self):
-		self.root = {}
-		self.active_point = None
-		self.reminder = 1
-		pass
-
-	def query(self, subStringOfKey):
-		pass
-
-	def add(self, key, value):
-		for i in range(len(key)):
-			self.addPrefix(key[0:i], value)
-		pass
-	
-	#private
-	def addPrefix(self, prefix, value):
-		pass
-
-class SuffixTreeFinder:
-	pass
 
