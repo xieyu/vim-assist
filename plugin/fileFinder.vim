@@ -15,6 +15,7 @@ command EditFinderRepos py editReposFile()
 
 "use RefreshFinderRepos, if files under dirs has been changed
 command RefreshFinderRepos py refresh()
+command EditRecentList py editRecentFilesList()
 
 "find files by prefix of filename
 command FinderFile py find()
@@ -41,24 +42,30 @@ if scriptdir not in sys.path:
 
 #get repos file path
 def getReposFilePath():
-	reposPaths = os.path.join(scriptdir, "reposPaths")
-	return reposPaths
+	reposPath = os.path.abspath(os.path.join(scriptdir, "reposPaths"))
+	return reposPath
 
-
+def getRecentFilesListPath():
+	recentFilesPath = os.path.abspath(os.path.join(scriptdir, "recentFiles"))
+	return recentFilesPath
+	
 def editReposFile():
 	vim.command("sp %s"%getReposFilePath()) 
 	vim.command("autocmd BufWritePost <buffer> py refresh()")
+
+def editRecentFilesList():
+	vim.command("sp %s"%getRecentFilesListPath())
+
 
 from FileFinder import FileFinderDriver
 #must import SharedFactory in *.vim file, see its doc for reason
 from Factory import SharedFactory
 
-reposFilePaths = getReposFilePath()
-filefinderDriver = FileFinderDriver(reposFilePaths)
+driver = FileFinderDriver(getReposFilePath(), getRecentFilesListPath())
 
 def find():
-	filefinderDriver.run()
+	driver.run()
 
 def refresh():
-	filefinderDriver.refresh()
+	driver.refresh()
 EOF

@@ -7,11 +7,16 @@ from Candidates import Candidate
 from Acceptor import Acceptor
 
 class FileFinderDriver:
-	def __init__(self, reposFile):
-		self.candidateManager = FileCandidateManager(reposFile)
+	def __init__(self, reposFile, recentFilesListPath):
+		self.candidateManager = FileCandidateManager(reposFile, recentFilesListPath)
+
 		self.finder = FileFinder()
 		self.finder.setIgnoreCase()
+		self.finder.setCandidateManager(self.candidateManager)
+
 		self.acceptor = FileAcceptor()
+		self.acceptor.setCandidateManager(self.candidateManager)
+
 		self.lock = threading.Lock()
 		self.refresh()
 
@@ -27,6 +32,7 @@ class FileFinderDriver:
 		self.lock.release()
 	
 	def run(self):
+		self.candidateManager.refreshRecentFilesList()
 		matcher = SharedFactory.getPromptMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
 		matcher.run()
 
@@ -35,16 +41,17 @@ class FileCandidate(Candidate):
 	def __init__(self, name, key, path):
 		Candidate.__init__(self, name, key)
 		self.path = path
-		pass
 		
 	def getPath(self):
 		return self.path
 
 class FileCandidateManager:
-	def __init__(self, reposFile):
+	def __init__(self, reposFile, recentFilesListPath):
 		self.reposFile = reposFile
 		self.rootPathList = self.parse(self.reposFile)
 		self.cachedCandidates = []
+		self.recentCandidates = []
+		self.recentFilesListPath = recentFilesListPath
 
 	def parse(self, reposFile):
 		try:
@@ -65,11 +72,13 @@ class FileCandidateManager:
 			for root, dirs, files in os.walk(rootPath):
 				for filePath in files:
 					filePath = os.path.join(root, filePath)
+					filePath = os.path.normcase(filePath)
 					if  self.pathShouldIgnore(filePath):
 						continue
 					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName, path = filePath)
+					iterm = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
+
 	
 	def pathShouldIgnore(self, filePath):
 		return ".git" in filePath
@@ -77,41 +86,80 @@ class FileCandidateManager:
 	def getCachedCandidates(self):
 		return self.cachedCandidates	
 
-	@staticmethod
-	def getBufferCandidates():
+	def getBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
 		def createCandidate(buf):
-			filePath = buf.name
+			filePath = os.path.normcase(buf.name)
 			fileName = os.path.basename(filePath)
-			return FileCandidate(name = "%s\t %s"%(fileName, filePath), key = fileName, path = filePath)
+			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
 		return map(createCandidate, buffers)
 
-	@staticmethod
-	def getRecentlyCandidates():
-		return []
 
-	@staticmethod
-	def addToRecentCandidates(fileCandidate):
-		pass
+	def refreshRecentFilesList(self):
+		try:
+			lines = open(self.recentFilesListPath).readlines()
+		except:
+			return
+		self.recentCandidates = []
+		for line in lines:
+			filePath = line.strip()
+			if os.path.exists(filePath):
+				fileName = os.path.basename(filePath)
+				candidate = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+				self.recentCandidates.append(candidate)
+
+
+	def getRecentlyCandidates(self):
+		return self.recentCandidates
+
+	def addToRecentCandidates(self, fileCandidate):
+		if fileCandidate not in self.recentCandidates:
+			self.recentCandidates.append(fileCandidate)
+		if os.path.isfile(self.recentFilesListPath):
+			os.remove(self.recentFilesListPath)
+		file =open(self.recentFilesListPath, "w") 
+		for candidate in self.recentCandidates:
+			file.write(candidate.getPath())
+			file.write('\n')
+		file.close()
 
 class FileFinder(TrieFinder):
+	def __init__(self):
+		TrieFinder.__init__(self)
+		self.candidateManager = None
+	def setCandidateManager(self, candidateManager):
+		self.candidateManager = candidateManager
+
 	def query(self, userInput):
-		return self.queryRecent(userInput) + TrieFinder.query(self, userInput)
+		def unique(candidatesList):
+			t = {}
+			for i in candidatesList:
+				t[i.getPath()] = i
+			return [value for key,value in t.items()]
+		return unique(self.queryRecent(userInput)) + TrieFinder.query(self, userInput)
 
 	def queryRecent(self, userInput):
-		candidates = FileCandidateManager.getBufferCandidates() + FileCandidateManager.getRecentlyCandidates()
+		candidates = []
+		if self.candidateManager:
+			candidates = self.candidateManager.getBufferCandidates() + self.candidateManager.getRecentlyCandidates()
+
 		def match(candidate):
 			return userInput is "" or userInput.lower() in os.path.basename(candidate.getPath()).lower()
+
 		return filter(match, candidates)
 		
 
 class FileAcceptor(Acceptor):
 	def __init__(self):
-		pass
+		self.candidateManager = None
+
+	def setCandidateManager(self, candidatesManager):
+		self.candidateManager = candidatesManager
 
 	def accept(self, fileCandidate, options = None):
 		if options is "None":
-			FileCandidateManager.addToRecentCandidates(fileCandidate)
+			if self.candidateManager:
+				self.candidateManager.addToRecentCandidates(fileCandidate)
 			return self.editFile(fileCandidate)
 
 	def selectWindow(self):
