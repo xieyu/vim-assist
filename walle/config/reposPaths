@@ -1,0 +1,7 @@
+#add abs path of dir that you want find here
+#line start with '#' will be treated as comments
+/Users/ic/.vim
+/Users/ic/codes/textmate/
+/Users/ic/codes/reksio-6
+/Users/ic/myblog
+/Users/ic/icblog

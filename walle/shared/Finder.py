@@ -1,3 +1,4 @@
+import copy
 class Finder:
 	def __init__(self):
 		pass
@@ -41,18 +42,18 @@ class TrieFinder(Finder):
 		self.trieTree = TrieTree()
 		self.addCandidates(candidates)
 
-	def query(self, word):
+	def query(self, word, maxNumber):
 		if not word:
 			return []
 		word = self.ignoreCase and word.lower() or word
-		return self.trieTree.query(word)
+		return self.trieTree.query(word, maxNumber)
 
 class TrieTree:
 	def __init__(self):
 		self.root = {}
 		self.leafName = "__TRIE_TREE_LEAFE_NAME__"
 
-	def query(self, prefixOfKey):
+	def query(self, prefixOfKey, maxNumber):
 		node = self.root
 		for w in prefixOfKey:
 			if node.has_key(w):
@@ -60,7 +61,7 @@ class TrieTree:
 			else:
 				return []
 		if node:
-			return self.getValuesOfAllChild(node)
+			return self.getValuesOfAllChild(node, maxNumber)
 
 	def add(self, key, value):
 		iterator = self.root
@@ -73,16 +74,24 @@ class TrieTree:
 		else:
 			iterator[self.leafName] = [value]
 	
-	def getValuesOfAllChild(self, node):
+	def getValuesOfAllChild(self, node, maxNumber):
 		values = []
+		if maxNumber < 0 :
+			return values
+
 		#leafNode
 		if node.has_key(self.leafName):
+			maxNumber = maxNumber - len(self.leafName)
 			values.extend(node[self.leafName])
 
 		#internal node
 		for key in node.keys():
+			if maxNumber < 0:
+				break
 			if key != self.leafName:
-				values.extend(self.getValuesOfAllChild(node[key]))
+				childs = self.getValuesOfAllChild(node[key], copy.copy(maxNumber))
+				maxNumber = maxNumber - len(childs)
+				values.extend(childs)
 
 		return values
 

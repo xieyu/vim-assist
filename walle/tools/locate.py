@@ -2,13 +2,14 @@ import os
 import threading
 import vim
 from Factory import SharedFactory
-from Finder import TrieFinder
-from Candidates import Candidate
-from Acceptor import Acceptor
+from shared.Finder import TrieFinder
+from shared.Candidates import Candidate
+from shared.Acceptor import Acceptor
+
 
 class FileFinderDriver:
-	def __init__(self, reposFile, recentFilesListPath):
-		self.candidateManager = FileCandidateManager(reposFile, recentFilesListPath)
+	def __init__(self):
+		self.candidateManager = FileCandidateManager(self.getReposPath(), self.getRecentPath())
 
 		self.finder = FileFinder()
 		self.finder.setIgnoreCase()
@@ -30,18 +31,34 @@ class FileFinderDriver:
 		self.finder.setCandidates(candidates)
 		print "file finder refresh is done :)"
 		self.lock.release()
-	
+
 	def run(self):
 		self.candidateManager.refreshRecentFilesList()
 		matcher = SharedFactory.getPromptMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
 		matcher.run()
+
+	def editReposConfig(self):
+		vim.command("sp %s"%self.getReposPath()) 
+
+	def editRecentConfig(self):
+		vim.command("sp %s"%self.getRecentPath()) 
+
+
+	def getReposPath(self):
+		walle_home = vim.eval("g:walle_home")
+		return os.path.abspath(os.path.join(walle_home, "config/reposConfig"))
+
+	def getRecentPath(self):
+		walle_home = vim.eval("g:walle_home")
+		return os.path.abspath(os.path.join(walle_home, "config/recentEditFiles"))
+
 
 
 class FileCandidate(Candidate):
 	def __init__(self, name, key, path):
 		Candidate.__init__(self, name, key)
 		self.path = path
-		
+
 	def getPath(self):
 		return self.path
 
@@ -79,12 +96,12 @@ class FileCandidateManager:
 					iterm = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
 
-	
+
 	def pathShouldIgnore(self, filePath):
 		return ".git" in filePath
 
 	def getCachedCandidates(self):
-		return self.cachedCandidates	
+		return self.cachedCandidates
 
 	def getBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
@@ -117,7 +134,7 @@ class FileCandidateManager:
 			self.recentCandidates.append(fileCandidate)
 		if os.path.isfile(self.recentFilesListPath):
 			os.remove(self.recentFilesListPath)
-		file =open(self.recentFilesListPath, "w") 
+		file =open(self.recentFilesListPath, "w")
 		for candidate in self.recentCandidates:
 			file.write(candidate.getPath())
 			file.write('\n')
@@ -127,27 +144,68 @@ class FileFinder(TrieFinder):
 	def __init__(self):
 		TrieFinder.__init__(self)
 		self.candidateManager = None
+		self.maxNumber = 30
+		self.lastMixResults = []
+		self.lastMixQuery = ""
+
+	def setMaxNumber(self, maxNumber):
+		self.maxNumber = maxNumber
+
 	def setCandidateManager(self, candidateManager):
 		self.candidateManager = candidateManager
 
 	def query(self, userInput):
-		def unique(candidatesList):
-			t = {}
-			for i in candidatesList:
-				t[i.getPath()] = i
-			return [value for key,value in t.items()]
-		return unique(self.queryRecent(userInput)) + TrieFinder.query(self, userInput)
+		if userInput is "":
+			self.lastMixResults = []
+			self.lastQuery = ""
+			return self.unique(self.queryRecent(userInput))
+
+		return self.unique(self.queryRecent(userInput) + self.queryMix(userInput))
 
 	def queryRecent(self, userInput):
 		candidates = []
 		if self.candidateManager:
 			candidates = self.candidateManager.getBufferCandidates() + self.candidateManager.getRecentlyCandidates()
 
-		def match(candidate):
-			return userInput is "" or userInput.lower() in os.path.basename(candidate.getPath()).lower()
+		return self.scanFilter(userInput, candidates)
 
+	def queryMix(self, userInput):
+		prefixCandidates = []
+
+		index = len(userInput)
+		while index > 0:
+			prefixCandidates = TrieFinder.query(self, userInput[:index], 30)
+			if prefixCandidates is not []:
+				break
+			index = index -1
+
+		self.lastMixResults = self.scanFilter(userInput, self.unique(prefixCandidates + self.lastMixResults))
+
+		return self.lastMixResults
+
+	def scanFilter(self, userInput, candidates):
+		def match(candidate):
+			return self.is_subset(userInput, candidate.getKey())
 		return filter(match, candidates)
-		
+
+	def unique(self, candidates):
+		seen = {}
+		ret = []
+		for candidate in candidates:
+			if not seen.has_key(candidate.getKey()):
+				ret.append(candidate)
+				seen[candidate.getKey()] = True
+		return ret
+
+	def is_subset(self, needle, haystack):
+		m, n = (0,0)
+		while n < len(needle) and m <len(haystack):
+			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
+				n = n + 1
+			m = m + 1
+		return n == len(needle)
+
+
 
 class FileAcceptor(Acceptor):
 	def __init__(self):
@@ -170,3 +228,5 @@ class FileAcceptor(Acceptor):
 		vim.command("silent e %s"%fileCandidate.getPath())
 		#close the window
 		return False
+
+file_locate_driver =FileFinderDriver()
