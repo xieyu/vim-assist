@@ -1,7 +1,7 @@
 import os
 import threading
 import vim
-from Factory import SharedFactory
+from shared.Factory import SharedFactory
 from shared.Finder import TrieFinder
 from shared.Candidates import Candidate
 from shared.Acceptor import Acceptor

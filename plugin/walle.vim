@@ -1,4 +1,4 @@
-let g:walle_home="~/.vim/bundle/finder/walle/"
+let g:walle_home="/Users/ic/.vim/bundle/finder/walle/"
 
 function RunWalleFile(filename)
 	exec "pyfile".g:walle_home.a:filename
@@ -8,6 +8,7 @@ function SetUpPath()
 python<<EOF
 import sys
 import os
+import vim
 walle_home = vim.eval("g:walle_home")
 sys.path.append(os.path.abspath(walle_home))
 EOF
