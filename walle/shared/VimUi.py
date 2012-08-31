@@ -35,7 +35,7 @@ class Widget:
 			if vim.current.window == initial:
 				break
 
-	
+
 	def show(self):
 		vim.command("noa keepa bo 5new %s"%self.bufferName) 
 		self.vimBuffer = vim.current.buffer
@@ -345,3 +345,55 @@ class Prompt:
 			right = empty.join(self.content[self.col + 1: len(self.content)])
 		return (left, cursor, right)
 
+
+class VimUtils:
+	@staticmethod
+	def getCurBufferContent():
+		return vim.current.buffer[:]
+
+	@staticmethod
+	def getCurBufferName():
+		return vim.current.buffer.name
+
+	@staticmethod
+	def getCurWinId():
+		return int(vim.eval("winnr()"))
+
+	@staticmethod
+	def getCurLineNum():
+		(row, col) = vim.current.window.cursor
+		return row
+
+	@staticmethod
+	def echo(msg):
+		vim.command('''echo "%s"'''%msg)
+		vim.command("redraw")
+
+	@staticmethod
+	def closeCurWin():
+		vim.command("close")
+
+	@staticmethod
+	def hideCurWin():
+		vim.command("hide")
+
+	@staticmethod
+	def openFile(filePath, postion):
+		vim.command("silent e %s"%filePath)
+		if postion:
+			(lin, col) = postion
+			#FIXME:how to move to col ?
+			if lin:
+				vim.command("%d"%lin)
+
+	@staticmethod
+	def jumpToLine(lineNum):
+		vim.command("%d"%lineNum)
+
+	@staticmethod
+	def makeWinFocusOn(winId):
+		vim.command("%d wincmd w"%winId)
+
+	@staticmethod
+	def getScriptDir():
+		return os.path.dirname(vim.eval('expand("<sfile>")'))

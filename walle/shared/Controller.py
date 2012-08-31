@@ -1,6 +1,6 @@
 import vim
-import VimUtils
 import VimUi
+from VimUi import VimUtils
 
 class InputMatchController:
 	def __init__(self, selfName):
