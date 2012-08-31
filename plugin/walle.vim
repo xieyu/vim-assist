@@ -1,7 +1,6 @@
-let g:walle_home="/Users/ic/.vim/bundle/finder/walle/"
 
 function RunWalleFile(filename)
-	exec "pyfile".g:walle_home.a:filename
+	exec "pyfile ".g:walle_home.a:filename
 endfunction
 
 function SetUpPath()

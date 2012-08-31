@@ -1,5 +1,7 @@
 import vim
 import VimUtils
+import VimUi
+
 class InputMatchController:
 	def __init__(self, selfName):
 		'''
@@ -17,12 +19,11 @@ class InputMatchController:
 		self.prompt = ">>"
 		self.closeCallback = None
 
-	def renew(self, title, finder, acceptor, window):
+	def renew(self, title, candidateManager, window):
 		self.window = window
 		self.window.renew(title)
-		self.finder = finder
-		self.acceptor = acceptor
-		self.keysMap["acceptSelect"] = self.acceptor.getKeysMap()
+		self.candidateManager = candidateManager
+		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		pass
 
@@ -35,7 +36,7 @@ class InputMatchController:
 	def run(self):
 		#FIXME:use right command at here
 		userInput = vim.eval('''input("%s")'''%self.prompt)
-		self.searchResult = self.finder.query(userInput)
+		self.searchResult = self.candidateManager.searchCandidate(userInput)
 		if self.searchResult:
 			self.makeKeyMap()
 			self.window.show()
@@ -56,7 +57,7 @@ class InputMatchController:
 	def acceptSelect(self, acceptWay):
 		candidate = self.getCurSelectedCandiate()
 		if candidate:
-			shouldKeep = self.acceptor.accept(candidate, acceptWay)
+			shouldKeep = self.candidateManager.acceptCandidate(candidate, acceptWay)
 			if not shouldKeep:
 				self.window.close()
 
@@ -97,12 +98,11 @@ class PromptMatchController(InputMatchController):
 					"<C-u>": "prePage", "<PageUp>": "prePage"
 					}
 
-	def renew(self, title, finder, acceptor, window):
+	def renew(self, title, candidateManager, window):
 		self.window = window
+		self.candidateManager = candidateManager
 		self.window.renew(title, self.userInputListener)
-		self.finder = finder
-		self.acceptor = acceptor
-		self.keysMap["acceptSelect"] = self.acceptor.getKeysMap()
+		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		self.curSelect = 0
 
@@ -113,7 +113,7 @@ class PromptMatchController(InputMatchController):
 
 	#private
 	def userInputListener(self, userInput):
-		self.searchResult = self.finder.query(userInput)
+		self.searchResult = self.candidateManager.searchCandidate(userInput)
 		self.window.setContent(map(lambda item: item.getName(), self.searchResult))
 
 	def moveSelect(self, stepDescripte):
@@ -133,4 +133,15 @@ class PromptMatchController(InputMatchController):
 			return self.searchResult[self.curSelect]
 		except:
 			return None
+
+class ControllerFactory:
+	promptWindow = VimUi.PromptWindow("ControllerFactory.promptWindow")
+	promptMatchController = PromptMatchController("ControllerFactory.promptMatchController")
+	@staticmethod
+	def getPromptMatchController(title, candidateManager):
+		'''Note, the returned matcher is shared, the the one you get before will be clean and be reused'''
+		ControllerFactory.promptMatchController.renew(title, candidateManager,
+				ControllerFactory.promptWindow)
+		return ControllerFactory.promptMatchController
+
 

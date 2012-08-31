@@ -1,47 +1,30 @@
 import os
 import threading
 import vim
-from shared.Factory import SharedFactory
+import json
+import re
+from shared.Controller import ControllerFactory
 from shared.Finder import TrieFinder
-from shared.Candidates import Candidate
-from shared.Acceptor import Acceptor
 
 
 class FileFinderDriver:
 	def __init__(self):
 		self.candidateManager = FileCandidateManager(self.getReposPath(), self.getRecentPath())
-
-		self.finder = FileFinder()
-		self.finder.setIgnoreCase()
-		self.finder.setCandidateManager(self.candidateManager)
-
-		self.acceptor = FileAcceptor()
-		self.acceptor.setCandidateManager(self.candidateManager)
-
-		self.lock = threading.Lock()
 		self.refresh()
 
 	def refresh(self):
-		threading.Thread(target = self.doRefresh).start()
-
-	def doRefresh(self):
-		self.lock.acquire()
 		self.candidateManager.refresh()
-		candidates = self.candidateManager.getCachedCandidates()
-		self.finder.setCandidates(candidates)
-		print "file finder refresh is done :)"
-		self.lock.release()
 
 	def run(self):
-		self.candidateManager.refreshRecentFilesList()
-		matcher = SharedFactory.getPromptMatchController(title ="Go-to-file", finder = self.finder, acceptor = self.acceptor)
+		self.candidateManager.onStart()
+		matcher = ControllerFactory.getPromptMatchController(title ="Go-to-file", candidateManager = self.candidateManager)
 		matcher.run()
 
 	def editReposConfig(self):
-		vim.command("sp %s"%self.getReposPath()) 
+		vim.command("sp %s"%self.getReposPath())
 
 	def editRecentConfig(self):
-		vim.command("sp %s"%self.getRecentPath()) 
+		vim.command("sp %s"%self.getRecentPath())
 
 
 	def getReposPath(self):
@@ -54,36 +37,75 @@ class FileFinderDriver:
 
 
 
-class FileCandidate(Candidate):
+class FileCandidate:
 	def __init__(self, name, key, path):
-		Candidate.__init__(self, name, key)
+		self.name = name
+		self.key = key
 		self.path = path
 
 	def getPath(self):
 		return self.path
 
-class FileCandidateManager:
-	def __init__(self, reposFile, recentFilesListPath):
-		self.reposFile = reposFile
-		self.rootPathList = self.parse(self.reposFile)
-		self.cachedCandidates = []
-		self.recentCandidates = []
-		self.recentFilesListPath = recentFilesListPath
+	def getName(self):
+		return self.name
 
-	def parse(self, reposFile):
+	def getKey(self):
+		return self.key
+
+class FileCandidateManager:
+	def __init__(self, reposConfig, recentConfig):
+		self.recentConfig = recentConfig
+		self.reposConfig = self.parse(reposConfig)
+		self.ignorePattern = None
+		self.finder = FileFinder()
+		self.finder.setIgnoreCase()
+		self.lock = threading.Lock()
+
+	def searchCandidate(self, pattern):
+		return self.finder.query(pattern)
+
+	def getKeysMap(self):
+		return {"<cr>":"None","<2-LeftMouse>":"None"}
+
+	def acceptCandidate(self, candidate, way):
+		if way is "None":
+			self.addToRecentCandidates(candidate)
+			vim.command("wincmd w") #try next window
+			vim.command("silent e %s"%candidate.getPath())
+		#close the window
+		return False
+
+	def onStart(self):
+		self.recentCandidates = []
 		try:
-			lines = open(reposFile).readlines()
+			lines = open(self.recentConfig).readlines()
+			for line in lines:
+				filePath = line.strip()
+				if os.path.exists(filePath):
+					fileName = os.path.basename(filePath)
+					candidate = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+					self.recentCandidates.append(candidate)
 		except:
-			print "your repose is empty, try use command FinderEditRepos"
-			return
-		return [line.strip()  for line in lines if line.strip() and line.strip()[0]!="#"]
+			self.recentCandidates = []
+		self.finder.setRecentCandidate(self.getBufferCandidates() + self.recentCandidates)
 
 	def refresh(self):
-		self.rootPathList = self.parse(self.reposFile)
-		if self.rootPathList is None:
-			return
+		threading.Thread(target = self.doRefresh).start()
+
+	def parse(self, reposConfigFile):
+		try:
+			reposConfig = json.load(open(reposConfigFile), 'utf-8')
+			return reposConfig
+		except:
+			print "error when load json config"
+			return None
+
+	def doRefresh(self):
+		self.lock.acquire()
+		reposPath = self.reposConfig["reposPath"]
 		self.cachedCandidates = []
-		for rootPath in self.rootPathList:
+		for rootPath in reposPath:
+			rootPath = rootPath.encode("utf-8", "ignore")
 			if not os.path.exists(rootPath):
 				print "%s is not exists"%rootPath
 			for root, dirs, files in os.walk(rootPath):
@@ -95,13 +117,17 @@ class FileCandidateManager:
 					fileName = os.path.basename(filePath)
 					iterm = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
+		self.finder.setCandidates(self.cachedCandidates)
+		self.lock.release()
 
 
 	def pathShouldIgnore(self, filePath):
-		return ".git" in filePath
-
-	def getCachedCandidates(self):
-		return self.cachedCandidates
+		if self.ignorePattern is None:
+			self.ignorePattern = map(self.tranlate, self.reposConfig["ignorePattern"])
+		#for pattern in self.ignorePattern:
+		#	if pattern.match(filePath):
+		#		return True
+		return False
 
 	def getBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
@@ -111,48 +137,39 @@ class FileCandidateManager:
 			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
 		return map(createCandidate, buffers)
 
-
-	def refreshRecentFilesList(self):
-		try:
-			lines = open(self.recentFilesListPath).readlines()
-		except:
-			return
-		self.recentCandidates = []
-		for line in lines:
-			filePath = line.strip()
-			if os.path.exists(filePath):
-				fileName = os.path.basename(filePath)
-				candidate = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
-				self.recentCandidates.append(candidate)
+	def tranlate(self, pattern):
+		table ={"*": ".*", '?':'.', "/": re.escape(os.sep)}
+		s="".join([ c in table.keys() and table[c] or c for c in pattern])
+		return re.compile(s)
 
 
-	def getRecentlyCandidates(self):
-		return self.recentCandidates
 
 	def addToRecentCandidates(self, fileCandidate):
 		if fileCandidate not in self.recentCandidates:
 			self.recentCandidates.append(fileCandidate)
-		if os.path.isfile(self.recentFilesListPath):
-			os.remove(self.recentFilesListPath)
-		file =open(self.recentFilesListPath, "w")
+
+		if os.path.isfile(self.recentConfig):
+			os.remove(self.recentConfig)
+		file =open(self.recentConfig, "w")
 		for candidate in self.recentCandidates:
 			file.write(candidate.getPath())
 			file.write('\n')
 		file.close()
 
+
 class FileFinder(TrieFinder):
 	def __init__(self):
 		TrieFinder.__init__(self)
-		self.candidateManager = None
 		self.maxNumber = 30
 		self.lastMixResults = []
 		self.lastMixQuery = ""
+		self.recentCandidates =[]
 
 	def setMaxNumber(self, maxNumber):
 		self.maxNumber = maxNumber
 
-	def setCandidateManager(self, candidateManager):
-		self.candidateManager = candidateManager
+	def setRecentCandidate(self, recentCandidates):
+		self.recentCandidates = recentCandidates
 
 	def query(self, userInput):
 		if userInput is "":
@@ -163,11 +180,7 @@ class FileFinder(TrieFinder):
 		return self.unique(self.queryRecent(userInput) + self.queryMix(userInput))
 
 	def queryRecent(self, userInput):
-		candidates = []
-		if self.candidateManager:
-			candidates = self.candidateManager.getBufferCandidates() + self.candidateManager.getRecentlyCandidates()
-
-		return self.scanFilter(userInput, candidates)
+		return self.scanFilter(userInput, self.recentCandidates)
 
 	def queryMix(self, userInput):
 		prefixCandidates = []
@@ -206,27 +219,4 @@ class FileFinder(TrieFinder):
 		return n == len(needle)
 
 
-
-class FileAcceptor(Acceptor):
-	def __init__(self):
-		self.candidateManager = None
-
-	def setCandidateManager(self, candidatesManager):
-		self.candidateManager = candidatesManager
-
-	def accept(self, fileCandidate, options = None):
-		if options is "None":
-			if self.candidateManager:
-				self.candidateManager.addToRecentCandidates(fileCandidate)
-			return self.editFile(fileCandidate)
-
-	def selectWindow(self):
-		vim.command("wincmd w") #try next window
-
-	def editFile(self, fileCandidate):
-		self.selectWindow()
-		vim.command("silent e %s"%fileCandidate.getPath())
-		#close the window
-		return False
-
-file_locate_driver =FileFinderDriver()
+file_locate_driver = FileFinderDriver()
