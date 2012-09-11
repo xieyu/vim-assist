@@ -2,7 +2,7 @@ import vim
 import VimUi
 from VimUi import VimUtils
 
-class InputMatchController:
+class DisplayController:
 	def __init__(self, selfName):
 		'''
 		self.selfName is a hack for use memberFunction for vim keyMap, 
@@ -14,6 +14,33 @@ class InputMatchController:
 		self.keysMap = { 
 				"close":{"<esc>":"None", "<c-c>":"None", "<c-g>":"None"},
 				}
+		pass
+	def reNew(self, candidateManager):
+		pass
+	def setDisPlayContent(self, content):
+		pass
+	def show():
+		pass
+
+	def makeKeyMap(self):
+		for functionName in self.keysMap.keys():
+			for key, param in self.keysMap[functionName].items():
+				self.registerMemberFunction(key, functionName, param)
+
+	def registerMemberFunction(self, key, function, param=None):
+		functionName = "%s.%s"%(self.selfName, function)
+		self.window.registerKeyMap(key, functionName, param)
+
+	def acceptSelect(self, acceptWay):
+		candidate = self.getCurSelectedCandiate()
+		if candidate:
+			shouldKeep = self.candidateManager.acceptCandidate(candidate, acceptWay)
+			if not shouldKeep:
+				self.window.close()
+
+class InputMatchController(DisplayController):
+	def __init__(self, selfName):
+		DisplayController.__init__(self, selfName)
 		self.searchResult = None
 		self.errorMsg = "find nothing :("
 		self.prompt = ">>"
@@ -45,21 +72,6 @@ class InputMatchController:
 			VimUtils.echo(self.errorMsg)
 			self.window.close()
 
-	def makeKeyMap(self):
-		for functionName in self.keysMap.keys():
-			for key, param in self.keysMap[functionName].items():
-				self.registerMemberFunction(key, functionName, param)
-
-	def registerMemberFunction(self, key, function, param=None):
-		functionName = "%s.%s"%(self.selfName, function)
-		self.window.registerKeyMap(key, functionName, param)
-
-	def acceptSelect(self, acceptWay):
-		candidate = self.getCurSelectedCandiate()
-		if candidate:
-			shouldKeep = self.candidateManager.acceptCandidate(candidate, acceptWay)
-			if not shouldKeep:
-				self.window.close()
 
 	def getCurSelectedCandiate(self):
 		curSelect = VimUtils.getCurLineNum() - 1

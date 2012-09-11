@@ -16,7 +16,7 @@ endfunction
 call SetUpPath()
 
 "locate files"
-call RunWalleFile("client/locate.py")
+call RunWalleFile("client/locateFile.py")
 "Commands:"
 command! EditReposConfig     py file_locate_driver.editReposConfig()
 command! EditRecentConfig    py file_locate_driver.editRecentConfig()
