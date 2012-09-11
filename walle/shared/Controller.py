@@ -11,16 +11,30 @@ class DisplayController:
 		So make sure that python can access the it in global scope
 		'''
 		self.selfName = selfName
-		self.keysMap = { 
-				"close":{"<esc>":"None", "<c-c>":"None", "<c-g>":"None"},
-				}
+		self.keysMap = {}
+		self.keysMap["close"]= {"<esc>":"None", "<c-c>":"None", "<c-g>":"None"}
+
+		self.closeCallback = None
+		self.keysMap["moveSelect"] = {
+					"<C-k>": "pre","<C-p>":"pre", "<Up>":"pre",
+					"<C-j>": "next", "<C-n>": "next","<Down>": "next",
+					"<C-d>":"nextPage", "<PageDown>": "nextPage",
+					"<C-u>": "prePage", "<PageUp>": "prePage"
+					}
+
+	def renew(self, title, candidateManager, window):
+		self.window = window
+		self.window.renew(title)
+		self.candidateManager = candidateManager
+		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
+		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		pass
-	def reNew(self, candidateManager):
-		pass
-	def setDisPlayContent(self, content):
-		pass
-	def show():
-		pass
+
+	def show(self, candidates):
+		self.makeKeyMap()
+		self.candidates = candidates
+		self.window.setContent(map(lambda item: item.getDisplayName(), self.candidates))
+		self.window.show()
 
 	def makeKeyMap(self):
 		for functionName in self.keysMap.keys():
@@ -38,21 +52,50 @@ class DisplayController:
 			if not shouldKeep:
 				self.window.close()
 
+	def getCurSelectedCandiate(self):
+		curSelect = VimUtils.getCurLineNum() - 1
+		try:
+			return self.searchResult[curSelect]
+		except:
+			return None
+
+	def close(self, param):
+		#param is "None", ignore it anyway
+		if self.closeCallback:
+			self.closeCallback()
+		self.window.close()
+
+	def setCloseCallback(self, closeCallback):
+		self.closeCallback = closeCallback
+
+	def getCandidateNumber(self):
+		try:
+			return len(self.searchResult)
+		except:
+			return 0
+
+	def getCandidateNumOnOnePage(self):
+		#currently we think that one line , one candidate
+		return self.window.getHeight()
+
+	def moveSelect(self, stepDescripte):
+		stepsMap = {"next":1, "pre": -1, "nextPage":self.getCandidateNumOnOnePage(), "prePage": -1*self.getCandidateNumOnOnePage()}
+		try:
+			step = stepsMap[stepDescripte]
+		except:
+			return
+		self.curSelect = max(min(self.curSelect + step, self.getCandidateNumber() -1), 0)
+		#note: vim lineNum start with 1, not zero.
+		self.window.setCursor(self.curSelect + 1, 0)
+		self.window.redraw()
+
+
 class InputMatchController(DisplayController):
 	def __init__(self, selfName):
 		DisplayController.__init__(self, selfName)
 		self.searchResult = None
 		self.errorMsg = "find nothing :("
 		self.prompt = ">>"
-		self.closeCallback = None
-
-	def renew(self, title, candidateManager, window):
-		self.window = window
-		self.window.renew(title)
-		self.candidateManager = candidateManager
-		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
-		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
-		pass
 
 	def setPrompt(self, prompt):
 		self.prompt = prompt
@@ -65,50 +108,17 @@ class InputMatchController(DisplayController):
 		userInput = vim.eval('''input("%s")'''%self.prompt)
 		self.searchResult = self.candidateManager.searchCandidate(userInput)
 		if self.searchResult:
-			self.makeKeyMap()
-			self.window.show()
-			self.window.setContent(map(lambda item: item.getName(), self.searchResult))
+			self.show(map(lambda item: item.getName(), self.searchResult))
 		else:
 			VimUtils.echo(self.errorMsg)
 			self.window.close()
 
 
-	def getCurSelectedCandiate(self):
-		curSelect = VimUtils.getCurLineNum() - 1
-		try:
-			return self.searchResult[curSelect]
-		except:
-			return None
-
-	def getCandidateNumber(self):
-		try:
-			return len(self.searchResult)
-		except:
-			return 0
-
-	def getCandidateNumOnOnePage(self):
-		#currently we think that one line , one candidate
-		return self.window.getHeight()
-
-	def close(self, param):
-		#param is "None", ignore it anyway
-		if self.closeCallback:
-			self.closeCallback()
-		self.window.close()
-
-	def setCloseCallback(self, closeCallback):
-		self.closeCallback = closeCallback
 
 
-class PromptMatchController(InputMatchController):
+class PromptMatchController(DisplayController):
 	def __init__(self, selfName):
-		InputMatchController.__init__(self, selfName)
-		self.keysMap["moveSelect"] = {
-					"<C-k>": "pre","<C-p>":"pre", "<Up>":"pre",
-					"<C-j>": "next", "<C-n>": "next","<Down>": "next",
-					"<C-d>":"nextPage", "<PageDown>": "nextPage",
-					"<C-u>": "prePage", "<PageUp>": "prePage"
-					}
+		DisplayController.__init__(self, selfName)
 
 	def renew(self, title, candidateManager, window):
 		self.window = window
@@ -126,18 +136,8 @@ class PromptMatchController(InputMatchController):
 	#private
 	def userInputListener(self, userInput):
 		self.searchResult = self.candidateManager.searchCandidate(userInput)
-		self.window.setContent(map(lambda item: item.getName(), self.searchResult))
+		self.window.setContent(map(lambda item: item.getDisplayName(), self.searchResult))
 
-	def moveSelect(self, stepDescripte):
-		stepsMap = {"next":1, "pre": -1, "nextPage":self.getCandidateNumOnOnePage(), "prePage": -1*self.getCandidateNumOnOnePage()}
-		try:
-			step = stepsMap[stepDescripte]
-		except:
-			return
-		self.curSelect = max(min(self.curSelect + step, self.getCandidateNumber() -1), 0)
-		#note: vim lineNum start with 1, not zero.
-		self.window.setCursor(self.curSelect + 1, 0)
-		self.window.redraw()
 
 	#private helpers
 	def getCurSelectedCandiate(self):
@@ -149,11 +149,20 @@ class PromptMatchController(InputMatchController):
 class ControllerFactory:
 	promptWindow = VimUi.PromptWindow("ControllerFactory.promptWindow")
 	promptMatchController = PromptMatchController("ControllerFactory.promptMatchController")
+
+	displayController = DisplayController("ControllerFactory.displayController")
+	displayWindow = VimUi.Window("ControllerFactory.displayWindow")
+
 	@staticmethod
 	def getPromptMatchController(title, candidateManager):
 		'''Note, the returned matcher is shared, the the one you get before will be clean and be reused'''
 		ControllerFactory.promptMatchController.renew(title, candidateManager,
 				ControllerFactory.promptWindow)
 		return ControllerFactory.promptMatchController
+
+	@staticmethod
+	def getDisplayController(title, candidateManager):
+		ControllerFactory.displayController.renew(title, candidateManager, ControllerFactory.displayWindow)
+		return ControllerFactory.displayController
 
 

@@ -16,12 +16,15 @@ endfunction
 call SetUpPath()
 
 "locate files"
-call RunWalleFile("client/locateFile.py")
+call RunWalleFile("client/locate.py")
 "Commands:"
 command! EditReposConfig     py file_locate_driver.editReposConfig()
 command! EditRecentConfig    py file_locate_driver.editRecentConfig()
 command! RefreshFinderRepos  py file_locate_driver.refresh()
 command! FinderFile          py file_locate_driver.run()
+
+command! -nargs=1 SetTagFile 		   py tag_locate_driver.setTagFile(<q-args>)
+command! -nargs=1 FindTagByFullName    py tag_locate_driver.findTagByFullName(<q-args>)
 "Maps:
 map <C-f> :FinderFile<CR>
 

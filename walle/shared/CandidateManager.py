@@ -2,40 +2,10 @@ import os
 import threading
 import vim
 import json
+from Finder import TrieFinder
+from ctags import CTags, TagEntry
+import ctags
 import re
-from shared.Controller import ControllerFactory
-from shared.Finder import TrieFinder
-
-
-class FileFinderDriver:
-	def __init__(self):
-		self.candidateManager = FileCandidateManager(self.getReposPath(), self.getRecentPath())
-		self.refresh()
-
-	def refresh(self):
-		self.candidateManager.refresh()
-
-	def run(self):
-		self.candidateManager.onStart()
-		matcher = ControllerFactory.getPromptMatchController(title ="Go-to-file", candidateManager = self.candidateManager)
-		matcher.run()
-
-	def editReposConfig(self):
-		vim.command("sp %s"%self.getReposPath())
-
-	def editRecentConfig(self):
-		vim.command("sp %s"%self.getRecentPath())
-
-
-	def getReposPath(self):
-		walle_home = vim.eval("g:walle_home")
-		return os.path.abspath(os.path.join(walle_home, "config/reposConfig"))
-
-	def getRecentPath(self):
-		walle_home = vim.eval("g:walle_home")
-		return os.path.abspath(os.path.join(walle_home, "config/recentEditFiles"))
-
-
 
 class FileCandidate:
 	def __init__(self, name, key, path):
@@ -52,11 +22,66 @@ class FileCandidate:
 	def getKey(self):
 		return self.key
 
-class FileCandidateManager:
-	def __init__(self, reposConfig, recentConfig):
+	def getDisplayName(self):
+		return "%-40s\t%s"%(self.name, self.path)
+
+class RecentManager:
+	def __init__(self, recentConfig):
 		self.recentConfig = recentConfig
-		self.reposConfig = self.parse(reposConfig)
-		self.ignorePattern = None
+
+	def addToRecent(self, fileCandidate):
+		if fileCandidate not in self.recentCandidates:
+			self.recentCandidates.append(fileCandidate)
+
+		if os.path.isfile(self.recentConfig):
+			os.remove(self.recentConfig)
+		file =open(self.recentConfig, "w")
+		for candidate in self.recentCandidates:
+			file.write(candidate.getPath())
+			file.write('\n')
+		file.close()
+
+	def getRecent(self):
+		result = []
+		try:
+			lines = open(self.recentConfig).readlines()
+			for line in lines:
+				filePath = line.strip()
+				if os.path.exists(filePath):
+					fileName = os.path.basename(filePath)
+					candidate = FileCandidate(name = fileName, key = fileName, path = filePath)
+					result.append(candidate)
+		except:
+			result = []
+		return result
+
+class ReposManager:
+	def __init__(self, reposConfig):
+		try:
+			reposConfig = json.load(open(reposConfigFile), 'utf-8')
+			self.reposPath = reposConfig["reposPath"]
+			self.reposIgnorePattern = reposConfig["ignorePattern"]
+		except:
+			self.reposPath = []
+			self.ignorePattern = []
+			print "error when load json config"
+
+	def getReposPath(self):
+		return self.reposPath
+
+	def getIgnorePattern(self):
+		return self.reposIgnorePattern
+
+	def tranlate(self, pattern):
+		table ={"*": ".*", '?':'.', "/": re.escape(os.sep)}
+		s="".join([ c in table.keys() and table[c] or c for c in pattern])
+		return re.compile(s)
+
+
+class FileCandidateManager:
+	def __init__(self, reposManager, recentManager):
+		self.recentManager = recentManager
+		self.reposManager  = reposManager
 		self.finder = FileFinder()
 		self.finder.setIgnoreCase()
 		self.lock = threading.Lock()
@@ -69,40 +94,23 @@ class FileCandidateManager:
 
 	def acceptCandidate(self, candidate, way):
 		if way is "None":
-			self.addToRecentCandidates(candidate)
+			self.recent.addToRecent(candidate)
 			vim.command("wincmd w") #try next window
 			vim.command("silent e %s"%candidate.getPath())
 		#close the window
 		return False
 
 	def onStart(self):
-		self.recentCandidates = []
-		try:
-			lines = open(self.recentConfig).readlines()
-			for line in lines:
-				filePath = line.strip()
-				if os.path.exists(filePath):
-					fileName = os.path.basename(filePath)
-					candidate = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
-					self.recentCandidates.append(candidate)
-		except:
-			self.recentCandidates = []
-		self.finder.setRecentCandidate(self.getBufferCandidates() + self.recentCandidates)
+		recents = self.recentManager.getRecent()
+		self.finder.setRecentCandidate(self.getBufferCandidates() + recents)
 
 	def refresh(self):
 		threading.Thread(target = self.doRefresh).start()
 
-	def parse(self, reposConfigFile):
-		try:
-			reposConfig = json.load(open(reposConfigFile), 'utf-8')
-			return reposConfig
-		except:
-			print "error when load json config"
-			return None
 
 	def doRefresh(self):
 		self.lock.acquire()
-		reposPath = self.reposConfig["reposPath"]
+		reposPath = self.reposManager.getReposPath()
 		self.cachedCandidates = []
 		for rootPath in reposPath:
 			rootPath = rootPath.encode("utf-8", "ignore")
@@ -122,8 +130,8 @@ class FileCandidateManager:
 
 
 	def pathShouldIgnore(self, filePath):
-		if self.ignorePattern is None:
-			self.ignorePattern = map(self.tranlate, self.reposConfig["ignorePattern"])
+		#if self.ignorePattern is None:
+		#	self.ignorePattern = map(self.tranlate, self.reposConfig["ignorePattern"])
 		#for pattern in self.ignorePattern:
 		#	if pattern.match(filePath):
 		#		return True
@@ -135,26 +143,12 @@ class FileCandidateManager:
 			filePath = os.path.normcase(buf.name)
 			fileName = os.path.basename(filePath)
 			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+
 		return map(createCandidate, buffers)
 
-	def tranlate(self, pattern):
-		table ={"*": ".*", '?':'.', "/": re.escape(os.sep)}
-		s="".join([ c in table.keys() and table[c] or c for c in pattern])
-		return re.compile(s)
 
 
 
-	def addToRecentCandidates(self, fileCandidate):
-		if fileCandidate not in self.recentCandidates:
-			self.recentCandidates.append(fileCandidate)
-
-		if os.path.isfile(self.recentConfig):
-			os.remove(self.recentConfig)
-		file =open(self.recentConfig, "w")
-		for candidate in self.recentCandidates:
-			file.write(candidate.getPath())
-			file.write('\n')
-		file.close()
 
 
 class FileFinder(TrieFinder):
@@ -219,4 +213,57 @@ class FileFinder(TrieFinder):
 		return n == len(needle)
 
 
-file_locate_driver = FileFinderDriver()
+class TagCandidate(FileCandidate):
+	def __init__(self, name, key, filePath, lineNumber):
+		FileCandidate.__init__(self, name, key, filePath)
+		self.lineNumber = lineNumber
+
+	def getlineNumber(self):
+		return int(self.lineNumber)
+
+	def getDisplayName(self):
+		return "%-40s\t%s: %s"%(self.name, self.path, self.lineNumber)
+
+
+class TagManager:
+	def getActiveTag():
+		pass
+
+	def generateTag(Path):
+		pass
+
+class TagCandidateManager:
+	def __init__(self, rencentManager):
+		self.recent = rencentManager
+
+	def setTagFile(self, tagFile):
+		self.tagFilePath = tagFile
+		self.tagFile=CTags(tagFile)
+
+	def getAllEntryInKind(self, kind):
+		entry = TagEntry()
+		result = []
+		while self.tagFile.next(entry):
+			if entry['kind'] == kind:
+				result.append(entry['name'])
+		return result
+
+	def getKeysMap(self):
+		return {"<cr>":"None","<2-LeftMouse>":"None"}
+
+	def findTagByFullName(self, name):
+		entry = TagEntry()
+		result = []
+		if self.tagFile.find(entry, name, ctags.TAG_FULLMATCH):
+			print entry['name']
+			result.append(TagCandidate(entry['name'], entry['name'], entry['file'], entry['lineNumber']))
+		while self.tagFile.findNext(entry):
+			result.append(TagCandidate(entry['name'], entry['name'],entry['file'], entry['lineNumber']))
+		return result
+
+	def acceptCandidate(self, candidate, way):
+		if way is "None":
+			self.recent.addToRecent(candidate)
+			vim.command("wincmd w") #try next window
+			vim.command("silent e %s"%candidate.getPath())
+		#close the window
