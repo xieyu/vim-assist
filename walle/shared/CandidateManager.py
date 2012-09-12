@@ -3,15 +3,12 @@ import threading
 import vim
 import json
 from Finder import TrieFinder
-from ctags import CTags, TagEntry
-import ctags
 import re
 import subprocess
 
 class FileCandidate:
-	def __init__(self, name, key, path):
+	def __init__(self, name, path):
 		self.name = name
-		self.key = key
 		self.path = path
 
 	def getPath(self):
@@ -21,7 +18,7 @@ class FileCandidate:
 		return self.name
 
 	def getKey(self):
-		return self.key
+		return self.path
 
 	def getDisplayName(self):
 		return "%-40s\t%s"%(self.name, self.path)
@@ -52,7 +49,7 @@ class RecentManager:
 				filePath = line.strip()
 				if os.path.exists(filePath):
 					fileName = os.path.basename(filePath)
-					candidate = FileCandidate(name = fileName, key = fileName, path = filePath)
+					candidate = FileCandidate(name = fileName, path = filePath)
 					result.append(candidate)
 		except:
 			result = []
@@ -85,9 +82,9 @@ class CandidateManager:
 		self.recentManager = recentManager
 
 	def getKeysMap(self):
-		return {"<cr>":"None","<2-LeftMouse>":"None"}
+		return {"<cr>":"None","<2-LeftMouse>":"keep","<c-o>":"keep"}
 
-	def acceptCandidate(self, candidate, way):
+	def acceptCandidate(self, candidate, way="None"):
 		if way is "None":
 			self.recentManager.addToRecent(candidate)
 			vim.command("wincmd w") #try next window
@@ -108,14 +105,14 @@ class MRUCandidateManager(CandidateManager):
 		if pattern is "":
 			result = self.getBufferCandidates()
 		result= [candidate for candidate in self.candidates if self.isSubset(pattern, candidate.getKey())]
-		return self.unique(result)
+		return CandidateUntils.unique(result)
 
 	def getBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
 		def createCandidate(buf):
 			filePath = os.path.normcase(buf.name)
 			fileName = os.path.basename(filePath)
-			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), path = filePath)
 		return map(createCandidate, buffers)
 
 	def isSubset(self, needle, haystack):
@@ -126,20 +123,7 @@ class MRUCandidateManager(CandidateManager):
 			m = m + 1
 		return n == len(needle)
 
-	def unique(self, candidates):
-		seen = {}
-		ret = []
-		for candidate in candidates:
-			if not seen.has_key(candidate.getKey()):
-				ret.append(candidate)
-				seen[candidate.getKey()] = True
-		return ret
 
-
-class TagCandidate(FileCandidate):
-	def __init__(self, name, key, filePath, lineNumber):
-		FileCandidate.__init__(self, name, key, filePath)
-		self.lineNumber = lineNumber
 
 
 class FileCandidateManager(MRUCandidateManager):
@@ -172,7 +156,7 @@ class FileCandidateManager(MRUCandidateManager):
 					if  self.pathShouldIgnore(filePath):
 						continue
 					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = fileName, key = fileName, path = filePath)
+					iterm = FileCandidate(name = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
 		self.finder.setCandidates(self.cachedCandidates)
 		self.lock.release()
@@ -203,7 +187,7 @@ class FileFinder(TrieFinder):
 	def query(self, userInput):
 		if userInput is "":
 			return []
-		return self.unique(self.queryMix(userInput))
+		return CandidateUntils.unique(self.queryMix(userInput))
 
 	def queryMix(self, userInput):
 		prefixCandidates = []
@@ -215,7 +199,7 @@ class FileFinder(TrieFinder):
 				break
 			index = index -1
 
-		self.lastMixResults = self.scanFilter(userInput, self.unique(prefixCandidates + self.lastMixResults))
+		self.lastMixResults = self.scanFilter(userInput, CandidateUntils.unique(prefixCandidates + self.lastMixResults))
 
 		return self.lastMixResults
 
@@ -223,15 +207,6 @@ class FileFinder(TrieFinder):
 		def match(candidate):
 			return self.is_subset(userInput, candidate.getKey())
 		return filter(match, candidates)
-
-	def unique(self, candidates):
-		seen = {}
-		ret = []
-		for candidate in candidates:
-			if not seen.has_key(candidate.getKey()):
-				ret.append(candidate)
-				seen[candidate.getKey()] = True
-		return ret
 
 	def is_subset(self, needle, haystack):
 		m, n = (0,0)
@@ -243,59 +218,95 @@ class FileFinder(TrieFinder):
 
 
 class TagCandidate(FileCandidate):
-	def __init__(self, name, key, filePath, lineNumber):
-		FileCandidate.__init__(self, name, key, filePath)
+	def __init__(self, name, path, lineNumber, codeSnip):
+		FileCandidate.__init__(self, name, path)
 		self.lineNumber = lineNumber
+		self.codeSnip = codeSnip
 
-	def getlineNumber(self):
+	def getLineNumber(self):
 		return int(self.lineNumber)
 
+	def getKey(self):
+		return self.path+self.lineNumber
+
 	def getDisplayName(self):
-		return "%-40s\t%s: %s"%(self.name, self.path, self.lineNumber)
-
-
-class TagManager:
-	def getActiveTag():
-		pass
-
-	def generateTag(Path):
-		pass
-
-class TagCandidateManager(CandidateManager):
-	def __init__(self, recentManager):
-		CandidateManager.__init__(self, recentManager)
-
-	def setTagFile(self, tagFile):
-		self.tagFilePath = tagFile
-		self.tagFile=CTags(tagFile)
-
-	def getAllEntryInKind(self, kind):
-		entry = TagEntry()
-		result = []
-		while self.tagFile.next(entry):
-			if entry['kind'] == kind:
-				result.append(entry['name'])
-		return result
-
-	def findTagByFullName(self, name):
-		entry = TagEntry()
-		result = []
-		if self.tagFile.find(entry, name, ctags.TAG_FULLMATCH):
-			result.append(TagCandidate(entry['name'], entry['name'], entry['file'], entry['lineNumber']))
-		while self.tagFile.findNext(entry):
-			result.append(TagCandidate(entry['name'], entry['name'],entry['file'], entry['lineNumber']))
-		return result
+		return "%-30s\t%-10s\t%-50s"%(os.path.basename(self.path), self.lineNumber, self.codeSnip)
 
 class GTagsManager(CandidateManager):
 	def __init__(self, recentManager):
 		CandidateManager.__init__(self, recentManager)
 
 	def globalCmd(self, cmd_args):
-		cmd = ["global"]+cmd_args
+		cmd = ["global"] + cmd_args
 		output = subprocess.check_output(cmd)
+		return output
+
+	def findFile(self, pattern, ignoreCase = False):
+		result = []
+		try:
+			option = ignoreCase and "-Pai" or "-Pa"
+			output = self.globalCmd([option, pattern])
+			result = self.createCandidateFromBriefOutPut(output)
+		except:
+			print "pelase make sure you have file GTAGS in cwd or it's partents dir"
+		return result
+
+	def findSymbolDefine(self, symbol):
+		output = self.globalCmd(["-ax", symbol])
+		result = self.createCandidateFromDetailOutput(output)
+		return result
+
+	def findSymbolRef(self, symbol):
+		output = self.globalCmd(["-arx", symbol])
+		return  self.createCandidateFromDetailOutput(output)
+
+	def findSymbol(self, symbol):
+		output = self.globalCmd(["-arxs", symbol])
+		return  self.createCandidateFromDetailOutput(output)
+
+	def createCandidateFromDetailOutput(self, output):
+		result = []
+		pattern = re.compile("(\S*)\s*(\d*)\s*(\S*)\s*(.*$)")
+		for line in output.split("\n"):
+			line = line.strip()
+			if line:
+				(symbol, lineNumber, filePath, codeSnip) = pattern.search(line).groups()
+				iterm = TagCandidate(name = symbol, path = filePath, lineNumber = lineNumber, codeSnip = codeSnip)
+				result.append(iterm)
+		return result
+
+
+	def createCandidateFromBriefOutPut(self, output):
 		result = []
 		for filePath in output.split("\n"):
-			fileName = os.path.basename(filePath)
-			iterm = FileCandidate(name = fileName, key = fileName, path = filePath)
-			result.append(iterm)
+			filePath = filePath.strip()
+			if filePath:
+				fileName = os.path.basename(filePath)
+				iterm = FileCandidate(name = fileName, path = filePath)
+				result.append(iterm)
 		return result
+
+
+	def acceptCandidate(self, candidate, way="None"):
+		self.recentManager.addToRecent(candidate)
+		vim.command("wincmd w") #try next window
+		vim.command("silent e %s"%candidate.getPath())
+
+		if isinstance(candidate, TagCandidate):
+			lineNumber = candidate.getLineNumber()
+			vim.command("%d"%lineNumber)
+			vim.command("normal z.")
+
+		return True if way =="keep" else False
+
+
+class CandidateUntils:
+	@staticmethod
+	def unique(candidates):
+		seen = {}
+		ret = []
+		for candidate in candidates:
+			if not seen.has_key(candidate.getKey()):
+				ret.append(candidate)
+				seen[candidate.getKey()] = True
+		return ret
