@@ -25,6 +25,12 @@ command! FinderFile          py file_locate_driver.run()
 
 command! -nargs=1 SetTagFile 		   py tag_locate_driver.setTagFile(<q-args>)
 command! -nargs=1 FindTagByFullName    py tag_locate_driver.findTagByFullName(<q-args>)
+command! -nargs=1 GtagsFindFile		   py gtagDriver.globalFindFile(<q-args>)
+command! -nargs=1 GtagsFindCmd	       py gtagDriver.globalCmd(<q-args>)
+command! FindMRU 		   	   		   py mruDriver.run()
+
 "Maps:
 map <C-f> :FinderFile<CR>
+map <C-r> :FindMRU<CR>
+map <C-g> :GtagsFindFile 
 

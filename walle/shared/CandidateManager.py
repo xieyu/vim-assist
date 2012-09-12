@@ -6,6 +6,7 @@ from Finder import TrieFinder
 from ctags import CTags, TagEntry
 import ctags
 import re
+import subprocess
 
 class FileCandidate:
 	def __init__(self, name, key, path):
@@ -30,13 +31,15 @@ class RecentManager:
 		self.recentConfig = recentConfig
 
 	def addToRecent(self, fileCandidate):
-		if fileCandidate not in self.recentCandidates:
-			self.recentCandidates.append(fileCandidate)
+		recentCandidates = self.getRecent()
+		if fileCandidate in recentCandidates:
+			return
 
+		recentCandidates.append(fileCandidate)
 		if os.path.isfile(self.recentConfig):
 			os.remove(self.recentConfig)
 		file =open(self.recentConfig, "w")
-		for candidate in self.recentCandidates:
+		for candidate in recentCandidates:
 			file.write(candidate.getPath())
 			file.write('\n')
 		file.close()
@@ -58,7 +61,7 @@ class RecentManager:
 class ReposManager:
 	def __init__(self, reposConfig):
 		try:
-			reposConfig = json.load(open(reposConfigFile), 'utf-8')
+			reposConfig = json.load(open(reposConfig), 'utf-8')
 			self.reposPath = reposConfig["reposPath"]
 			self.reposIgnorePattern = reposConfig["ignorePattern"]
 		except:
@@ -77,32 +80,78 @@ class ReposManager:
 		s="".join([ c in table.keys() and table[c] or c for c in pattern])
 		return re.compile(s)
 
-
-class FileCandidateManager:
-	def __init__(self, reposManager, recentManager):
+class CandidateManager:
+	def __init__(self, recentManager):
 		self.recentManager = recentManager
-		self.reposManager  = reposManager
-		self.finder = FileFinder()
-		self.finder.setIgnoreCase()
-		self.lock = threading.Lock()
-
-	def searchCandidate(self, pattern):
-		return self.finder.query(pattern)
 
 	def getKeysMap(self):
 		return {"<cr>":"None","<2-LeftMouse>":"None"}
 
 	def acceptCandidate(self, candidate, way):
 		if way is "None":
-			self.recent.addToRecent(candidate)
+			self.recentManager.addToRecent(candidate)
 			vim.command("wincmd w") #try next window
 			vim.command("silent e %s"%candidate.getPath())
 		#close the window
 		return False
 
+class MRUCandidateManager(CandidateManager):
+	def __init__(self, recentManager):
+		CandidateManager.__init__(self, recentManager)
+		self.recentmanager =recentManager
+		self.candidates = []
+
 	def onStart(self):
-		recents = self.recentManager.getRecent()
-		self.finder.setRecentCandidate(self.getBufferCandidates() + recents)
+		self.candidates = self.recentManager.getRecent() + self.getBufferCandidates()
+
+	def searchCandidate(self, pattern):
+		if pattern is "":
+			result = self.getBufferCandidates()
+		result= [candidate for candidate in self.candidates if self.isSubset(pattern, candidate.getKey())]
+		return self.unique(result)
+
+	def getBufferCandidates(self):
+		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
+		def createCandidate(buf):
+			filePath = os.path.normcase(buf.name)
+			fileName = os.path.basename(filePath)
+			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+		return map(createCandidate, buffers)
+
+	def isSubset(self, needle, haystack):
+		m, n = (0,0)
+		while n < len(needle) and m <len(haystack):
+			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
+				n = n + 1
+			m = m + 1
+		return n == len(needle)
+
+	def unique(self, candidates):
+		seen = {}
+		ret = []
+		for candidate in candidates:
+			if not seen.has_key(candidate.getKey()):
+				ret.append(candidate)
+				seen[candidate.getKey()] = True
+		return ret
+
+
+class TagCandidate(FileCandidate):
+	def __init__(self, name, key, filePath, lineNumber):
+		FileCandidate.__init__(self, name, key, filePath)
+		self.lineNumber = lineNumber
+
+
+class FileCandidateManager(MRUCandidateManager):
+	def __init__(self, reposManager, recentManager):
+		MRUCandidateManager.__init__(self, recentManager)
+		self.reposManager  = reposManager
+		self.finder = FileFinder()
+		self.finder.setIgnoreCase()
+		self.lock = threading.Lock()
+
+	def searchCandidate(self, pattern):
+		return MRUCandidateManager.searchCandidate(self, pattern) + self.finder.query(pattern)
 
 	def refresh(self):
 		threading.Thread(target = self.doRefresh).start()
@@ -123,7 +172,7 @@ class FileCandidateManager:
 					if  self.pathShouldIgnore(filePath):
 						continue
 					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
+					iterm = FileCandidate(name = fileName, key = fileName, path = filePath)
 					self.cachedCandidates.append(iterm)
 		self.finder.setCandidates(self.cachedCandidates)
 		self.lock.release()
@@ -136,18 +185,6 @@ class FileCandidateManager:
 		#	if pattern.match(filePath):
 		#		return True
 		return False
-
-	def getBufferCandidates(self):
-		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
-		def createCandidate(buf):
-			filePath = os.path.normcase(buf.name)
-			fileName = os.path.basename(filePath)
-			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), key = fileName, path = filePath)
-
-		return map(createCandidate, buffers)
-
-
-
 
 
 
@@ -162,19 +199,11 @@ class FileFinder(TrieFinder):
 	def setMaxNumber(self, maxNumber):
 		self.maxNumber = maxNumber
 
-	def setRecentCandidate(self, recentCandidates):
-		self.recentCandidates = recentCandidates
 
 	def query(self, userInput):
 		if userInput is "":
-			self.lastMixResults = []
-			self.lastQuery = ""
-			return self.unique(self.queryRecent(userInput))
-
-		return self.unique(self.queryRecent(userInput) + self.queryMix(userInput))
-
-	def queryRecent(self, userInput):
-		return self.scanFilter(userInput, self.recentCandidates)
+			return []
+		return self.unique(self.queryMix(userInput))
 
 	def queryMix(self, userInput):
 		prefixCandidates = []
@@ -232,9 +261,9 @@ class TagManager:
 	def generateTag(Path):
 		pass
 
-class TagCandidateManager:
-	def __init__(self, rencentManager):
-		self.recent = rencentManager
+class TagCandidateManager(CandidateManager):
+	def __init__(self, recentManager):
+		CandidateManager.__init__(self, recentManager)
 
 	def setTagFile(self, tagFile):
 		self.tagFilePath = tagFile
@@ -248,22 +277,25 @@ class TagCandidateManager:
 				result.append(entry['name'])
 		return result
 
-	def getKeysMap(self):
-		return {"<cr>":"None","<2-LeftMouse>":"None"}
-
 	def findTagByFullName(self, name):
 		entry = TagEntry()
 		result = []
 		if self.tagFile.find(entry, name, ctags.TAG_FULLMATCH):
-			print entry['name']
 			result.append(TagCandidate(entry['name'], entry['name'], entry['file'], entry['lineNumber']))
 		while self.tagFile.findNext(entry):
 			result.append(TagCandidate(entry['name'], entry['name'],entry['file'], entry['lineNumber']))
 		return result
 
-	def acceptCandidate(self, candidate, way):
-		if way is "None":
-			self.recent.addToRecent(candidate)
-			vim.command("wincmd w") #try next window
-			vim.command("silent e %s"%candidate.getPath())
-		#close the window
+class GTagsManager(CandidateManager):
+	def __init__(self, recentManager):
+		CandidateManager.__init__(self, recentManager)
+
+	def globalCmd(self, cmd_args):
+		cmd = ["global"]+cmd_args
+		output = subprocess.check_output(cmd)
+		result = []
+		for filePath in output.split("\n"):
+			fileName = os.path.basename(filePath)
+			iterm = FileCandidate(name = fileName, key = fileName, path = filePath)
+			result.append(iterm)
+		return result

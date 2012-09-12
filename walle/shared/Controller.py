@@ -28,7 +28,7 @@ class DisplayController:
 		self.candidateManager = candidateManager
 		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
-		pass
+		self.curSelect = 0
 
 	def show(self, candidates):
 		self.makeKeyMap()
@@ -55,7 +55,7 @@ class DisplayController:
 	def getCurSelectedCandiate(self):
 		curSelect = VimUtils.getCurLineNum() - 1
 		try:
-			return self.searchResult[curSelect]
+			return self.candidates[curSelect]
 		except:
 			return None
 
@@ -70,7 +70,7 @@ class DisplayController:
 
 	def getCandidateNumber(self):
 		try:
-			return len(self.searchResult)
+			return len(self.candidates)
 		except:
 			return 0
 
@@ -106,8 +106,8 @@ class InputMatchController(DisplayController):
 	def run(self):
 		#FIXME:use right command at here
 		userInput = vim.eval('''input("%s")'''%self.prompt)
-		self.searchResult = self.candidateManager.searchCandidate(userInput)
-		if self.searchResult:
+		self.candidates = self.candidateManager.searchCandidate(userInput)
+		if self.candidates:
 			self.show(map(lambda item: item.getName(), self.searchResult))
 		else:
 			VimUtils.echo(self.errorMsg)
@@ -135,16 +135,10 @@ class PromptMatchController(DisplayController):
 
 	#private
 	def userInputListener(self, userInput):
-		self.searchResult = self.candidateManager.searchCandidate(userInput)
-		self.window.setContent(map(lambda item: item.getDisplayName(), self.searchResult))
+		self.candidates = self.candidateManager.searchCandidate(userInput)
+		self.window.setContent(map(lambda item: item.getDisplayName(), self.candidates))
 
 
-	#private helpers
-	def getCurSelectedCandiate(self):
-		try:
-			return self.searchResult[self.curSelect]
-		except:
-			return None
 
 class ControllerFactory:
 	promptWindow = VimUi.PromptWindow("ControllerFactory.promptWindow")
