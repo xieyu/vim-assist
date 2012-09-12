@@ -30,6 +30,9 @@ class DisplayController:
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		self.curSelect = 0
 
+	def setFileType(self, filetype):
+		self.window.addOption("ft=%s"%filetype)
+
 	def show(self, candidates):
 		self.makeKeyMap()
 		self.candidates = candidates
@@ -157,6 +160,7 @@ class ControllerFactory:
 	@staticmethod
 	def getDisplayController(title, candidateManager):
 		ControllerFactory.displayController.renew(title, candidateManager, ControllerFactory.displayWindow)
+		ControllerFactory.displayController.setFileType("cpp")
 		return ControllerFactory.displayController
 
 

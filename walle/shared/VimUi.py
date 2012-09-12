@@ -53,13 +53,14 @@ class Widget:
 	def getHeight(self):
 		return self.height
 
-	def setOptions(self, options):
-		self.options = options
+	def addOption(self, option):
+		self.options.append(option)
 		self.updateOptions()
 
-	def addOptions(self, options):
-		self.options.extend(options)
+	def setOptions(self, options):
+		self.options = list(options)
 		self.updateOptions()
+
 
 
 	def setHeight(self, height):

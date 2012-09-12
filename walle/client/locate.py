@@ -52,23 +52,26 @@ class GTagDriver(Driver):
 		displayer.show(result)
 
 	def findFile(self, pattern):
-		result = self.candidateManager.findFile(pattern, ignoreCase=True)
+		result = self.candidateManager.findFile(pattern)
 		displayer = ControllerFactory.getDisplayController("Goto-file", self.candidateManager)
 		displayer.show(result)
 
 	def findSymbolDefine(self, pattern):
 		result = self.candidateManager.findSymbolDefine(pattern)
 		displayer = ControllerFactory.getDisplayController("symbol-define", self.candidateManager)
+		displayer.setFileType("cpp")
 		displayer.show(result)
 
 	def findSymbolRef(self, pattern):
 		result = self.candidateManager.findSymbolRef(pattern)
 		displayer = ControllerFactory.getDisplayController("symbol-reference", self.candidateManager)
+		displayer.setFileType("cpp")
 		displayer.show(result)
 
 	def findSymbol(self, pattern):
 		result = self.candidateManager.findSymbol(pattern)
 		displayer = ControllerFactory.getDisplayController("symbol", self.candidateManager)
+		displayer.setFileType("cpp")
 		displayer.show(result)
 
 	def changeBetweenHeaderAndcFile(self):
@@ -127,4 +130,3 @@ mruDriver = MRUDriver()
 def DriverTest():
 	gtagDriver.findSymbolRef("BeginPaint")
 
-DriverTest()

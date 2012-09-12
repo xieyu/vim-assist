@@ -124,8 +124,6 @@ class MRUCandidateManager(CandidateManager):
 		return n == len(needle)
 
 
-
-
 class FileCandidateManager(MRUCandidateManager):
 	def __init__(self, reposManager, recentManager):
 		MRUCandidateManager.__init__(self, recentManager)
@@ -241,7 +239,7 @@ class GTagsManager(CandidateManager):
 		output = subprocess.check_output(cmd)
 		return output
 
-	def findFile(self, pattern, ignoreCase = False):
+	def findFile(self, pattern, ignoreCase = True):
 		result = []
 		try:
 			option = ignoreCase and "-Pai" or "-Pa"
