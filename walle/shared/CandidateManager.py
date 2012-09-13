@@ -18,7 +18,7 @@ class FileCandidate:
 		return self.name
 
 	def getKey(self):
-		return self.path
+		return os.path.normpath(self.path)
 
 	def getDisplayName(self):
 		return "%-40s\t%s"%(self.name, self.path)
@@ -29,10 +29,11 @@ class RecentManager:
 
 	def addToRecent(self, fileCandidate):
 		recentCandidates = self.getRecent()
-		if fileCandidate in recentCandidates:
-			return
-
+		for candidate in recentCandidates:
+			if fileCandidate.getKey() == candidate.getKey():
+				return
 		recentCandidates.append(fileCandidate)
+		recentCandidates.reverse()
 		if os.path.isfile(self.recentConfig):
 			os.remove(self.recentConfig)
 		file =open(self.recentConfig, "w")
@@ -104,15 +105,16 @@ class MRUCandidateManager(CandidateManager):
 	def searchCandidate(self, pattern):
 		if pattern is "":
 			result = self.getBufferCandidates()
+		substringResult =[candidate for candidate in self.candidates if pattern.lower() in candidate.getKey().lower()]
 		result= [candidate for candidate in self.candidates if self.isSubset(pattern, candidate.getKey())]
-		return CandidateUntils.unique(result)
+		return CandidateUntils.unique(substringResult + result)
 
 	def getBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
 		def createCandidate(buf):
-			filePath = os.path.normcase(buf.name)
+			filePath = buf.name
 			fileName = os.path.basename(filePath)
-			return FileCandidate(name = "%-40s\t%s"%(fileName, filePath), path = filePath)
+			return FileCandidate(name = "%-40s"%fileName, path = filePath)
 		return map(createCandidate, buffers)
 
 	def isSubset(self, needle, haystack):
