@@ -29,11 +29,10 @@ class RecentManager:
 
 	def addToRecent(self, fileCandidate):
 		recentCandidates = self.getRecent()
-		for candidate in recentCandidates:
-			if fileCandidate.getKey() == candidate.getKey():
-				return
 		recentCandidates.append(fileCandidate)
 		recentCandidates.reverse()
+		recentCandidates = CandidateUntils.unique(recentCandidates)
+
 		if os.path.isfile(self.recentConfig):
 			os.remove(self.recentConfig)
 		file =open(self.recentConfig, "w")
@@ -55,6 +54,15 @@ class RecentManager:
 		except:
 			result = []
 		return result
+
+class BookMarkManager:
+	def __init__(self, storeFileName):
+		self.db = storeFileName
+
+	def addToBookMark(self, TagCandidate):
+		pass
+	def getBookMarks(self):
+		pass
 
 class ReposManager:
 	def __init__(self, reposConfig):
@@ -97,24 +105,41 @@ class MRUCandidateManager(CandidateManager):
 	def __init__(self, recentManager):
 		CandidateManager.__init__(self, recentManager)
 		self.recentmanager =recentManager
-		self.candidates = []
+		self.recentCandidates = []
+		self.bufferedCandidates = []
 
 	def onStart(self):
-		self.candidates = self.recentManager.getRecent() + self.getBufferCandidates()
+		self.recentCandidates = self.recentManager.getRecent()
+		self.bufferedCandidates = self.makeBufferCandidates()
 
 	def searchCandidate(self, pattern):
+		candidatesToSearch = self.recentCandidates + self.bufferedCandidates
 		if pattern is "":
-			result = self.getBufferCandidates()
-		substringResult =[candidate for candidate in self.candidates if pattern.lower() in candidate.getKey().lower()]
-		result= [candidate for candidate in self.candidates if self.isSubset(pattern, candidate.getKey())]
+			result = self.recentCandidates
+			return CandidateUntils.unique(result)
+		elif pattern[0] == "@":
+			candidatesToSearch = self.bufferedCandidates
+			pattern =pattern[1:]
+		elif pattern[0] == "#":
+			candidatesToSearch = self.recentCandidates
+			pattern =pattern[1:]
+
+		substringResult =[candidate for candidate in candidatesToSearch if pattern.lower() in candidate.getKey().lower()]
+		result= [candidate for candidate in candidatesToSearch if self.isSubset(pattern, candidate.getKey())]
 		return CandidateUntils.unique(substringResult + result)
 
-	def getBufferCandidates(self):
+	def addPathtoRecent(self, path):
+		if path and os.path.exists(path):
+			filePath = os.path.abspath(path)
+			fileName =os.path.basename(path)
+			self.recentManager.addToRecent(FileCandidate(name=fileName, path=filePath))
+
+	def makeBufferCandidates(self):
 		buffers = filter(lambda buf: buf.name and os.path.exists(buf.name), vim.buffers)
 		def createCandidate(buf):
 			filePath = buf.name
 			fileName = os.path.basename(filePath)
-			return FileCandidate(name = "%-40s"%fileName, path = filePath)
+			return FileCandidate(name = fileName, path = filePath)
 		return map(createCandidate, buffers)
 
 	def isSubset(self, needle, haystack):

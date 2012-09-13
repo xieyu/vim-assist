@@ -115,6 +115,12 @@ class MRUDriver(Driver):
 		matcher = ControllerFactory.getPromptMatchController(title ="Go-to-file", candidateManager = self.candidateManager)
 		matcher.run()
 
+	def addCurrentToRecent(self):
+		self.candidateManager.addPathtoRecent(vim.current.buffer.name)
+
+	def addPathtoRecent(self, path):
+		self.candidateManager.addPathtoRecent(path)
+
 	def editReposConfig(self):
 		vim.command("sp %s"%self.getReposPath())
 
