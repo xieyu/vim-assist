@@ -94,12 +94,11 @@ class CandidateManager:
 		return {"<cr>":"None","<2-LeftMouse>":"keep","<c-o>":"keep"}
 
 	def acceptCandidate(self, candidate, way="None"):
-		if way is "None":
-			self.recentManager.addToRecent(candidate)
-			vim.command("wincmd w") #try next window
-			vim.command("silent e %s"%candidate.getPath())
+		self.recentManager.addToRecent(candidate)
+		vim.command("wincmd w") #try next window
+		vim.command("silent e %s"%candidate.getPath())
 		#close the window
-		return False
+		return False if way is not "keep" else True
 
 class MRUCandidateManager(CandidateManager):
 	def __init__(self, recentManager):
