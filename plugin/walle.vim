@@ -15,7 +15,7 @@ endfunction
 
 call SetUpPath()
 
-"locate files"
+"locate"
 call RunWalleFile("client/locate.py")
 "Commands:"
 "command! EditReposConfig     py file_locate_driver.editReposConfig()
@@ -41,11 +41,11 @@ command! -nargs=1 FindInAllBuffer      py quickFindDriver.findInAllBuffers(<q-ar
 
 command! WalleTest  				   py DriverTest()
 
-au BufRead,BufNewFile * py mruDriver.addCurrentToRecent()
+au BufRead,BufNewFile * 			   py mruDriver.addCurrentToRecent()
+
 "Maps:
 map <C-f> :FindInMRU<CR>
 map <C-g> :FindFile 
-
 nmap ga :ChangeBetweenHeaderAndcFile<CR>
 nmap gd :FindSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap gs :FindSymbol <C-R>=expand("<cword>")<CR><CR>
