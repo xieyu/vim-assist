@@ -144,7 +144,7 @@ class MRUDriver(Driver):
 		vim.command("sp %s"%self.getRecentPath())
 
 
-file_locate_driver = FileFinderDriver()
+#file_locate_driver = FileFinderDriver()
 #tag_locate_driver = TagFinderDriver()
 gtagDriver = GTagDriver()
 mruDriver = MRUDriver()
