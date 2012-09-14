@@ -8,6 +8,7 @@ from shared.CandidateManager import ReposManager
 from shared.CandidateManager import GTagsManager
 from shared.CandidateManager import MRUCandidateManager
 from shared.CandidateManager import CandidateUntils
+from shared.CandidateManager import QuickFind
 
 class Driver:
 	def getReposPath(self):
@@ -95,11 +96,26 @@ class GTagDriver(Driver):
 		result = CandidateUntils.unique(result)
 		if len(result) == 0:
 			print "can not find file in list: %s"%s
-		if len(result) == 1:
+		elif len(result) == 1:
 			self.candidateManager.acceptCandidate(result[0],"None")
 		else:
 			displayer = ControllerFactory.getDisplayController("change_header_and_c", self.candidateManager)
 			displayer.show(result)
+
+class QuickFindDriver:
+	def __init__(self):
+		self.candidateManager = QuickFind()
+
+	def findInCurrentBuffer(self, pattern):
+		result = self.candidateManager.findInCurrentBuffer(pattern)
+		displayer = ControllerFactory.getDisplayController("find-in-current-buffer", self.candidateManager)
+		displayer.show(result)
+		displayer.highLightWord(pattern)
+
+	def findInAllBuffers(self, pattern):
+		result = self.candidateManager.findInAllBuffers(pattern)
+		displayer = ControllerFactory.getDisplayController("find-in-all-buffer", self.candidateManager)
+		displayer.show(result)
 
 
 
@@ -132,6 +148,7 @@ file_locate_driver = FileFinderDriver()
 #tag_locate_driver = TagFinderDriver()
 gtagDriver = GTagDriver()
 mruDriver = MRUDriver()
+quickFindDriver = QuickFindDriver()
 
 def DriverTest():
 	gtagDriver.findSymbolRef("BeginPaint")

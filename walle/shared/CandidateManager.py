@@ -55,14 +55,6 @@ class RecentManager:
 			result = []
 		return result
 
-class BookMarkManager:
-	def __init__(self, storeFileName):
-		self.db = storeFileName
-
-	def addToBookMark(self, TagCandidate):
-		pass
-	def getBookMarks(self):
-		pass
 
 class ReposManager:
 	def __init__(self, reposConfig):
@@ -87,18 +79,40 @@ class ReposManager:
 		return re.compile(s)
 
 class CandidateManager:
-	def __init__(self, recentManager):
+	def __init__(self, recentManager = None):
 		self.recentManager = recentManager
 
 	def getKeysMap(self):
-		return {"<cr>":"None","<2-LeftMouse>":"keep","<c-o>":"keep"}
+		return {"<cr>":"close","<2-LeftMouse>":"keep","<c-o>":"keep", "<c-p>": "preview"}
 
-	def acceptCandidate(self, candidate, way="None"):
-		self.recentManager.addToRecent(candidate)
+	def acceptCandidate(self, candidate, way="close"):
+		if way =="close":
+			self.openCandidate(candidate)
+			return False
+
+		#todo: make a better name
+		if way == "keep":
+			self.openCandidate(candidate)
+			return True
+
+		if way =="preview":
+			curwin = vim.eval("winnr()")
+			self.openCandidate(candidate)
+			#jump back to current window
+			vim.command("%s wincmd w"%curwin)
+			return True
+		return True
+
+	def openCandidate(self, candidate):
+		if self.recentManager:
+			self.recentManager.addToRecent(candidate)
 		vim.command("wincmd w") #try next window
 		vim.command("silent e %s"%candidate.getPath())
-		#close the window
-		return False if way is not "keep" else True
+
+		if isinstance(candidate, TagCandidate):
+			lineNumber = candidate.getLineNumber()
+			vim.command("%d"%lineNumber)
+			vim.command("normal z.")
 
 class MRUCandidateManager(CandidateManager):
 	def __init__(self, recentManager):
@@ -124,7 +138,7 @@ class MRUCandidateManager(CandidateManager):
 			pattern =pattern[1:]
 
 		substringResult =[candidate for candidate in candidatesToSearch if pattern.lower() in candidate.getKey().lower()]
-		result= [candidate for candidate in candidatesToSearch if self.isSubset(pattern, candidate.getKey())]
+		result= [candidate for candidate in candidatesToSearch if CandidateUntils.isSubset(pattern, candidate.getKey())]
 		return CandidateUntils.unique(substringResult + result)
 
 	def addPathtoRecent(self, path):
@@ -141,13 +155,6 @@ class MRUCandidateManager(CandidateManager):
 			return FileCandidate(name = fileName, path = filePath)
 		return map(createCandidate, buffers)
 
-	def isSubset(self, needle, haystack):
-		m, n = (0,0)
-		while n < len(needle) and m <len(haystack):
-			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
-				n = n + 1
-			m = m + 1
-		return n == len(needle)
 
 
 class FileCandidateManager(MRUCandidateManager):
@@ -229,16 +236,9 @@ class FileFinder(TrieFinder):
 
 	def scanFilter(self, userInput, candidates):
 		def match(candidate):
-			return self.is_subset(userInput, candidate.getKey())
+			return CandidateUntils.isSubset(userInput, candidate.getKey())
 		return filter(match, candidates)
 
-	def is_subset(self, needle, haystack):
-		m, n = (0,0)
-		while n < len(needle) and m <len(haystack):
-			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
-				n = n + 1
-			m = m + 1
-		return n == len(needle)
 
 
 class TagCandidate(FileCandidate):
@@ -311,17 +311,6 @@ class GTagsManager(CandidateManager):
 		return result
 
 
-	def acceptCandidate(self, candidate, way="None"):
-		self.recentManager.addToRecent(candidate)
-		vim.command("wincmd w") #try next window
-		vim.command("silent e %s"%candidate.getPath())
-
-		if isinstance(candidate, TagCandidate):
-			lineNumber = candidate.getLineNumber()
-			vim.command("%d"%lineNumber)
-			vim.command("normal z.")
-
-		return True if way =="keep" else False
 
 
 class CandidateUntils:
@@ -334,3 +323,44 @@ class CandidateUntils:
 				ret.append(candidate)
 				seen[candidate.getKey()] = True
 		return ret
+
+	@staticmethod
+	def isSubset(needle, haystack):
+		m, n = (0,0)
+		while n < len(needle) and m <len(haystack):
+			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
+				n = n + 1
+			m = m + 1
+
+class QuickFind(CandidateManager):
+	def __init__(self):
+		CandidateManager.__init__(self)
+		pass
+
+	def findInCurrentBuffer(self, pattern):
+		return self.findinBuffer(pattern, vim.current.buffer)
+
+	def findInAllBuffers(self, pattern):
+		result = []
+		for buffer in vim.buffers:
+			result.extend(self.findinBuffer(pattern, buffer))
+		return result
+
+	def findinBuffer(self, pattern, vimBuffer):
+		result = []
+		filePath = vimBuffer.name
+		fileName = os.path.basename(filePath)
+		for lineIndex, line in enumerate(vimBuffer):
+			if re.search(pattern, line):
+				result.append(TagCandidate(name=fileName, path=filePath, lineNumber = lineIndex+1, codeSnip = line.strip()))
+		return result
+
+	def acceptCandidate(self, candidate, way):
+		if way == "autoPreview":
+			curwin = vim.eval("winnr()")
+			self.openCandidate(candidate)
+			#jump back to current window
+			vim.command("%s wincmd w"%curwin)
+			return True
+		return CandidateManager.acceptCandidate(self, candidate, way)
+

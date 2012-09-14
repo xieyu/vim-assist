@@ -16,8 +16,8 @@ class DisplayController:
 
 		self.closeCallback = None
 		self.keysMap["moveSelect"] = {
-					"<C-k>": "pre","<C-p>":"pre", "<Up>":"pre",
-					"<C-j>": "next", "<C-n>": "next","<Down>": "next",
+					"<C-k>": "pre", "<Up>":"pre",
+					"<C-j>": "next", "<Down>": "next",
 					"<C-d>":"nextPage", "<PageDown>": "nextPage",
 					"<C-u>": "prePage", "<PageUp>": "prePage"
 					}
@@ -29,6 +29,11 @@ class DisplayController:
 		self.keysMap["acceptSelect"] = self.candidateManager.getKeysMap()
 		self.window.setOptions(("buftype=nofile", "nomodifiable", "nobuflisted", "noinsertmode", "nowrap","nonumber","textwidth=0"))
 		self.curSelect = 0
+
+	def highLightWord(self, word):
+		vim.command("hi hiword guifg=red")
+		vim.command('''silent match hiword /%s/'''%word)
+
 
 	def setFileType(self, filetype):
 		self.window.addOption("ft=%s"%filetype)
@@ -91,6 +96,7 @@ class DisplayController:
 		#note: vim lineNum start with 1, not zero.
 		self.window.setCursor(self.curSelect + 1, 0)
 		self.window.redraw()
+		self.acceptSelect("autoPreview")
 
 
 class InputMatchController(DisplayController):
