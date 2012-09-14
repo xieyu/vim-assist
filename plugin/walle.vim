@@ -19,29 +19,35 @@ call SetUpPath()
 call RunWalleFile("client/locate.py")
 "Commands:"
 "command! EditReposConfig     py file_locate_driver.editReposConfig()
-"command! EditRecentConfig    py file_locate_driver.editRecentConfig()
 "command! RefreshFinderRepos  py file_locate_driver.refresh()
 "command! FinderFile          py file_locate_driver.run()
 
 "command! -nargs=1 SetTagFile 		   py tag_locate_driver.setTagFile(<q-args>)
 "command! -nargs=1 FindTagByFullName    py tag_locate_driver.findTagByFullName(<q-args>)
+
+
+"for Gtags, please make sure you have GTAGS in your cwd's or its parent's dir
+"or parent's parent dir ...
 command! -nargs=1 GlobalCmd	       py gtagDriver.globalCmd(<q-args>)
 command! -nargs=1 FindFile		   py gtagDriver.findFile(<q-args>)
 command! -nargs=1 FindSymbol     	   py gtagDriver.findSymbol(<q-args>)
 command! -nargs=1 FindSymbolDefine     py gtagDriver.findSymbolDefine(<q-args>)
 command! -nargs=1 FindSymbolRef        py gtagDriver.findSymbolRef(<q-args>)
-
 command! ChangeBetweenHeaderAndcFile   py gtagDriver.changeBetweenHeaderAndcFile()
 
+"MRU managerment
 command! FindInMRU 		   	   		   py mruDriver.run()
 command! AddToRecent 		   		   py mruDriver.addCurrentToRecent()
+command! EditRecent  				   py mruDriver.editRecentConfig()
 command! -nargs=1 AddPathToRecent 	   py mruDriver.addPathToRecent(<q-args>)
+au BufRead,BufNewFile * 			   py mruDriver.addCurrentToRecent()
+
+"quick find
 command! -nargs=1 FindInBuffer         py quickFindDriver.findInCurrentBuffer(<q-args>)
 command! -nargs=1 FindInAllBuffer      py quickFindDriver.findInAllBuffers(<q-args>)
 
 command! WalleTest  				   py DriverTest()
 
-au BufRead,BufNewFile * 			   py mruDriver.addCurrentToRecent()
 
 "Maps:
 map <C-f> :FindInMRU<CR>
