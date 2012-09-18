@@ -33,6 +33,9 @@ class RecentManager:
 		recentCandidates.reverse()
 		recentCandidates = CandidateUntils.unique(recentCandidates)
 
+		if not os.path.exists(os.path.dirname(self.recentConfig)):
+			os.mkdir(os.path.dirname(self.recentConfig))
+
 		if os.path.isfile(self.recentConfig):
 			os.remove(self.recentConfig)
 		file =open(self.recentConfig, "w")
