@@ -1,4 +1,6 @@
 
+let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
+let g:walle_home = s:plugin_path."/../walle/"
 function! RunWalleFile(filename)
 	exec "pyfile ".g:walle_home.a:filename
 endfunction
@@ -8,6 +10,7 @@ python<<EOF
 import sys
 import os
 import vim
+
 walle_home = vim.eval("g:walle_home")
 sys.path.append(os.path.abspath(walle_home))
 EOF
