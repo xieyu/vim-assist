@@ -1,9 +1,9 @@
 
-function RunWalleFile(filename)
+function! RunWalleFile(filename)
 	exec "pyfile ".g:walle_home.a:filename
 endfunction
 
-function SetUpPath()
+function! SetUpPath()
 python<<EOF
 import sys
 import os
