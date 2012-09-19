@@ -2,9 +2,7 @@ import os
 import vim
 import re
 from shared.Controller import ControllerFactory
-from shared.CandidateManager import FileCandidateManager
 from shared.CandidateManager import RecentManager
-from shared.CandidateManager import ReposManager
 from shared.CandidateManager import GTagsManager
 from shared.CandidateManager import MRUCandidateManager
 from shared.CandidateManager import CandidateUntils
@@ -18,27 +16,6 @@ class Driver:
 	def getRecentPath(self):
 		walle_home = vim.eval("g:walle_home")
 		return os.path.abspath(os.path.join(walle_home, "config/recentEditFiles"))
-
-class FileFinderDriver(Driver):
-	def __init__(self):
-		recentManager = RecentManager(self.getRecentPath())
-		reposManager = ReposManager(self.getReposPath())
-		self.candidateManager = FileCandidateManager(reposManager, recentManager)
-
-	def refresh(self):
-		self.candidateManager.refresh()
-
-	def run(self):
-		self.candidateManager.onStart()
-		matcher = ControllerFactory.getPromptMatchController(title ="Go-to-file", candidateManager = self.candidateManager)
-		matcher.run()
-
-	def editReposConfig(self):
-		vim.command("sp %s"%self.getReposPath())
-
-	def editRecentConfig(self):
-		vim.command("sp %s"%self.getRecentPath())
-
 
 
 class GTagDriver(Driver):
@@ -97,7 +74,7 @@ class GTagDriver(Driver):
 		if len(result) == 0:
 			print "can not find file in list: %s"%s
 		elif len(result) == 1:
-			self.candidateManager.acceptCandidate(result[0],"None")
+			self.candidateManager.acceptCandidate(result[0])
 		else:
 			displayer = ControllerFactory.getDisplayController("change_header_and_c", self.candidateManager)
 			displayer.show(result)
@@ -116,8 +93,6 @@ class QuickFindDriver:
 		result = self.candidateManager.findInAllBuffers(pattern)
 		displayer = ControllerFactory.getDisplayController("find-in-all-buffer", self.candidateManager)
 		displayer.show(result)
-
-
 
 
 class MRUDriver(Driver):
@@ -144,8 +119,6 @@ class MRUDriver(Driver):
 		vim.command("sp %s"%self.getRecentPath())
 
 
-#file_locate_driver = FileFinderDriver()
-#tag_locate_driver = TagFinderDriver()
 gtagDriver = GTagDriver()
 mruDriver = MRUDriver()
 quickFindDriver = QuickFindDriver()

@@ -23,6 +23,21 @@ class FileCandidate:
 	def getDisplayName(self):
 		return "%-40s\t%s"%(self.name, self.path)
 
+class TagCandidate(FileCandidate):
+	def __init__(self, name, path, lineNumber, codeSnip):
+		FileCandidate.__init__(self, name, path)
+		self.lineNumber = lineNumber
+		self.codeSnip = codeSnip
+
+	def getLineNumber(self):
+		return int(self.lineNumber)
+
+	def getKey(self):
+		return self.path+self.lineNumber
+
+	def getDisplayName(self):
+		return "%-30s\t%-10s\t%-50s"%(os.path.basename(self.path), self.lineNumber, self.codeSnip)
+
 class RecentManager:
 	def __init__(self, recentConfig):
 		self.recentConfig = recentConfig
@@ -59,27 +74,6 @@ class RecentManager:
 		return result
 
 
-class ReposManager:
-	def __init__(self, reposConfig):
-		try:
-			reposConfig = json.load(open(reposConfig), 'utf-8')
-			self.reposPath = reposConfig["reposPath"]
-			self.reposIgnorePattern = reposConfig["ignorePattern"]
-		except:
-			self.reposPath = []
-			self.ignorePattern = []
-			print "error when load json config"
-
-	def getReposPath(self):
-		return self.reposPath
-
-	def getIgnorePattern(self):
-		return self.reposIgnorePattern
-
-	def tranlate(self, pattern):
-		table ={"*": ".*", '?':'.', "/": re.escape(os.sep)}
-		s="".join([ c in table.keys() and table[c] or c for c in pattern])
-		return re.compile(s)
 
 class CandidateManager:
 	def __init__(self, recentManager = None):
@@ -92,7 +86,6 @@ class CandidateManager:
 		if way =="close":
 			self.openCandidate(candidate)
 			return False
-
 		#todo: make a better name
 		if way == "keep":
 			self.openCandidate(candidate)
@@ -159,106 +152,6 @@ class MRUCandidateManager(CandidateManager):
 		return map(createCandidate, buffers)
 
 
-
-class FileCandidateManager(MRUCandidateManager):
-	def __init__(self, reposManager, recentManager):
-		MRUCandidateManager.__init__(self, recentManager)
-		self.reposManager  = reposManager
-		self.finder = FileFinder()
-		self.finder.setIgnoreCase()
-		self.lock = threading.Lock()
-
-	def searchCandidate(self, pattern):
-		return MRUCandidateManager.searchCandidate(self, pattern) + self.finder.query(pattern)
-
-	def refresh(self):
-		threading.Thread(target = self.doRefresh).start()
-
-
-	def doRefresh(self):
-		self.lock.acquire()
-		reposPath = self.reposManager.getReposPath()
-		self.cachedCandidates = []
-		for rootPath in reposPath:
-			rootPath = rootPath.encode("utf-8", "ignore")
-			if not os.path.exists(rootPath):
-				print "%s is not exists"%rootPath
-			for root, dirs, files in os.walk(rootPath):
-				for filePath in files:
-					filePath = os.path.join(root, filePath)
-					filePath = os.path.normcase(filePath)
-					if  self.pathShouldIgnore(filePath):
-						continue
-					fileName = os.path.basename(filePath)
-					iterm = FileCandidate(name = fileName, path = filePath)
-					self.cachedCandidates.append(iterm)
-		self.finder.setCandidates(self.cachedCandidates)
-		self.lock.release()
-
-
-	def pathShouldIgnore(self, filePath):
-		#if self.ignorePattern is None:
-		#	self.ignorePattern = map(self.tranlate, self.reposConfig["ignorePattern"])
-		#for pattern in self.ignorePattern:
-		#	if pattern.match(filePath):
-		#		return True
-		return False
-
-
-
-class FileFinder(TrieFinder):
-	def __init__(self):
-		TrieFinder.__init__(self)
-		self.maxNumber = 30
-		self.lastMixResults = []
-		self.lastMixQuery = ""
-		self.recentCandidates =[]
-
-	def setMaxNumber(self, maxNumber):
-		self.maxNumber = maxNumber
-
-
-	def query(self, userInput):
-		if userInput is "":
-			return []
-		return CandidateUntils.unique(self.queryMix(userInput))
-
-	def queryMix(self, userInput):
-		prefixCandidates = []
-
-		index = len(userInput)
-		while index > 0:
-			prefixCandidates = TrieFinder.query(self, userInput[:index], 30)
-			if prefixCandidates is not []:
-				break
-			index = index -1
-
-		self.lastMixResults = self.scanFilter(userInput, CandidateUntils.unique(prefixCandidates + self.lastMixResults))
-
-		return self.lastMixResults
-
-	def scanFilter(self, userInput, candidates):
-		def match(candidate):
-			return CandidateUntils.isSubset(userInput, candidate.getKey())
-		return filter(match, candidates)
-
-
-
-class TagCandidate(FileCandidate):
-	def __init__(self, name, path, lineNumber, codeSnip):
-		FileCandidate.__init__(self, name, path)
-		self.lineNumber = lineNumber
-		self.codeSnip = codeSnip
-
-	def getLineNumber(self):
-		return int(self.lineNumber)
-
-	def getKey(self):
-		return self.path+self.lineNumber
-
-	def getDisplayName(self):
-		return "%-30s\t%-10s\t%-50s"%(os.path.basename(self.path), self.lineNumber, self.codeSnip)
-
 class GTagsManager(CandidateManager):
 	def __init__(self, recentManager):
 		CandidateManager.__init__(self, recentManager)
@@ -312,8 +205,6 @@ class GTagsManager(CandidateManager):
 				iterm = FileCandidate(name = fileName, path = filePath)
 				result.append(iterm)
 		return result
-
-
 
 
 class CandidateUntils:
