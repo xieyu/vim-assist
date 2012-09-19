@@ -99,10 +99,12 @@ class CandidateManager:
 			return True
 		return True
 
+
 	def openCandidate(self, candidate):
 		if self.recentManager:
 			self.recentManager.addToRecent(candidate)
-		vim.command("wincmd w") #try next window
+		wId = vim.eval("VimUtils#firstUsableWindow()")
+		vim.command("%s wincmd w"%wId) #try next window
 		vim.command("silent e %s"%candidate.getPath())
 
 		if isinstance(candidate, TagCandidate):
