@@ -7,6 +7,7 @@ from shared.CandidateManager import GTagsManager
 from shared.CandidateManager import MRUCandidateManager
 from shared.CandidateManager import CandidateUntils
 from shared.CandidateManager import QuickFind
+from shared.CandidateManager import VimCommandCandidateManager
 
 class Driver:
 	def getReposPath(self):
@@ -118,11 +119,29 @@ class MRUDriver(Driver):
 	def editRecentConfig(self):
 		vim.command("sp %s"%self.getRecentPath())
 
+class VimCommandDriver(Driver):
+	def __init__(self):
+		#recentManager = RecentManager()
+		self.candidateManager = VimCommandCandidateManager()
+
+	def run(self):
+		self.candidateManager.onStart()
+		matcher = ControllerFactory.getPromptMatchController(title ="command", candidateManager = self.candidateManager)
+		matcher.run()
+
+
+
+
+
+
 
 gtagDriver = GTagDriver()
 mruDriver = MRUDriver()
 quickFindDriver = QuickFindDriver()
+vimCommandDriver = VimCommandDriver()
+
 
 def DriverTest():
 	gtagDriver.findSymbolRef("BeginPaint")
+
 

@@ -1,8 +1,5 @@
 import os
-import threading
 import vim
-import json
-from Finder import TrieFinder
 import re
 import subprocess
 
@@ -37,6 +34,20 @@ class TagCandidate(FileCandidate):
 
 	def getDisplayName(self):
 		return "%-30s\t%-10s\t%-50s"%(os.path.basename(self.path), self.lineNumber, self.codeSnip)
+	
+
+class VimCommandCandidate:
+	def __init__(self, commandName, argNum):
+		self.commandName = commandName
+		self.argNum = argNum
+
+	def getKey(self):
+		return self.commandName	
+
+	def getDisplayName(self):
+		return self.commandName
+	def getCommand(self):
+		return self.commandName
 
 class RecentManager:
 	def __init__(self, recentConfig):
@@ -259,4 +270,48 @@ class QuickFind(CandidateManager):
 			vim.command("%s wincmd w"%curwin)
 			return True
 		return CandidateManager.acceptCandidate(self, candidate, way)
+
+class VimCommandCandidateManager:
+	def __init__(self):
+		pass
+
+	def onStart(self):
+		self.candidates = self.makeFakeCandidate()
+
+	def searchCandidate(self, pattern):
+		if pattern is "":
+			return self.candidates
+		ret =[]
+		for candidate in self.candidates:
+			if pattern in candidate.getKey().lower():
+				ret.append(candidate)
+		return ret
+
+	def makeFakeCandidate(self):
+		data=["FindSymbol", "FindSymbolDefine", "FindSymbolRef", "NERDTree", "FindFile", "TagbarToggle"]
+		ret = []
+		for d in data:
+			candidate = VimCommandCandidate(d,0)
+			ret.append(candidate)
+		return ret
+
+	def makeCandidate(self):
+		commands = vim.command("command")
+		patternRaw='''^[!]?\s*[b]?\s*([A-Z][a-zA-Z0-9]*)\s*([0-9+*?])'''
+		pattern = re.compile(patternRaw)
+		result = []
+		for line in commands:
+			m = pattern.match(line)
+			candidate = VimCommandCandidate(m.groups(0), m.groups(1))
+			result.append(candidate)
+		return result
+
+	def getKeysMap(self):
+		return {"<cr>":"close","<2-LeftMouse>":"keep","<c-o>":"keep", "<c-p>": "preview"}
+	def acceptCandidate(self,candidate, way):
+		if way =="close":
+			vim.command(candidate.getCommand())
+			return False
+		return True
+
 
