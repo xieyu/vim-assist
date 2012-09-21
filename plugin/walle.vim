@@ -40,7 +40,6 @@ command! ChangeBetweenHeaderAndcFile   py gtagDriver.changeBetweenHeaderAndcFile
 
 "MRU managerment
 command! FindInMRU 		   	   		   py mruDriver.run()
-command! FindVimCommand 		   	   py vimCommandDriver.run()
 command! AddToRecent 		   		   py mruDriver.addCurrentToRecent()
 command! EditRecent  				   py mruDriver.editRecentConfig()
 command! -nargs=1 AddPathToRecent 	   py mruDriver.addPathToRecent(<q-args>)
@@ -52,6 +51,8 @@ command! -nargs=1 FindInAllBuffer      py quickFindDriver.findInAllBuffers(<q-ar
 
 command! WalleTest  				   py DriverTest()
 
+command! FindVimCommand 		   	   py vimCommandDriver.run()
+command! EditVimCommand                py vimCommandDriver.editVimCommandConfig()
 
 "Maps:
 map <C-f> :FindInMRU<CR>

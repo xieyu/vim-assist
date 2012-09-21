@@ -238,6 +238,7 @@ class CandidateUntils:
 			if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
 				n = n + 1
 			m = m + 1
+		return n == len(needle)
 
 class QuickFind(CandidateManager):
 	def __init__(self):
@@ -272,8 +273,8 @@ class QuickFind(CandidateManager):
 		return CandidateManager.acceptCandidate(self, candidate, way)
 
 class VimCommandCandidateManager:
-	def __init__(self):
-		pass
+	def __init__(self, commandConfigFile):
+		self.commandCOnfigFile = commandConfigFile
 
 	def onStart(self):
 		self.candidates = self.makeFakeCandidate()
@@ -285,14 +286,22 @@ class VimCommandCandidateManager:
 		for candidate in self.candidates:
 			if pattern in candidate.getKey().lower():
 				ret.append(candidate)
-		return ret
+		for candidate in self.candidates:
+			if CandidateUntils.isSubset(pattern.lower(), candidate.getKey().lower()):
+				ret.append(candidate)
+
+		return CandidateUntils.unique(ret)
 
 	def makeFakeCandidate(self):
-		data=["FindSymbol", "FindSymbolDefine", "FindSymbolRef", "NERDTree", "FindFile", "TagbarToggle"]
 		ret = []
-		for d in data:
-			candidate = VimCommandCandidate(d,0)
-			ret.append(candidate)
+		try:
+			lines = open(self.commandCOnfigFile).readlines()
+			for line in lines:
+				s = line.split(" ")[0].strip()
+				candidate = VimCommandCandidate(s,0)
+				ret.append(candidate)
+		except:
+			ret = []
 		return ret
 
 	def makeCandidate(self):
@@ -308,6 +317,7 @@ class VimCommandCandidateManager:
 
 	def getKeysMap(self):
 		return {"<cr>":"close","<2-LeftMouse>":"keep","<c-o>":"keep", "<c-p>": "preview"}
+
 	def acceptCandidate(self,candidate, way):
 		if way =="close":
 			vim.command(candidate.getCommand())

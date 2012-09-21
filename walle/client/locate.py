@@ -18,6 +18,20 @@ class Driver:
 		walle_home = vim.eval("g:walle_home")
 		return os.path.abspath(os.path.join(walle_home, "config/recentEditFiles"))
 
+	def getVimCommandPath(self):
+		walle_home = vim.eval("g:walle_home")
+		return os.path.abspath(os.path.join(walle_home, "config/vimCommand"))
+
+	def editReposConfig(self):
+		vim.command("sp %s"%self.getReposPath())
+
+	def editRecentConfig(self):
+		vim.command("sp %s"%self.getRecentPath())
+
+	def editVimCommandConfig(self):
+		vim.command("sp%s"%self.getVimCommandPath())
+		
+
 
 class GTagDriver(Driver):
 	def __init__(self):
@@ -113,16 +127,11 @@ class MRUDriver(Driver):
 	def addPathtoRecent(self, path):
 		self.candidateManager.addPathtoRecent(path)
 
-	def editReposConfig(self):
-		vim.command("sp %s"%self.getReposPath())
-
-	def editRecentConfig(self):
-		vim.command("sp %s"%self.getRecentPath())
 
 class VimCommandDriver(Driver):
 	def __init__(self):
 		#recentManager = RecentManager()
-		self.candidateManager = VimCommandCandidateManager()
+		self.candidateManager = VimCommandCandidateManager(self.getVimCommandPath())
 
 	def run(self):
 		self.candidateManager.onStart()
