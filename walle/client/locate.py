@@ -49,23 +49,28 @@ class GTagDriver(Driver):
 		displayer = ControllerFactory.getDisplayController("Goto-file", self.candidateManager)
 		displayer.show(result)
 
+	def showResut(self, result, pattern, title):
+		displayer = ControllerFactory.getDisplayController("%s"%title, self.candidateManager)
+		if  len(result) == 0:
+			print "can not find symbol with pattern %s"%pattern
+		elif(len(result)==1):
+			self.candidateManager.acceptCandidate(result[0])
+		else:
+			displayer.setFileType("cpp")
+			displayer.show(result)
+
 	def findSymbolDefine(self, pattern):
 		result = self.candidateManager.findSymbolDefine(pattern)
-		displayer = ControllerFactory.getDisplayController("symbol-define", self.candidateManager)
-		displayer.setFileType("cpp")
-		displayer.show(result)
+		self.showResut(result, pattern, "symbol-define")
 
 	def findSymbolRef(self, pattern):
 		result = self.candidateManager.findSymbolRef(pattern)
-		displayer = ControllerFactory.getDisplayController("symbol-reference", self.candidateManager)
-		displayer.setFileType("cpp")
-		displayer.show(result)
+		self.showResut(result, pattern, "symbol-reference")
+
 
 	def findSymbol(self, pattern):
 		result = self.candidateManager.findSymbol(pattern)
-		displayer = ControllerFactory.getDisplayController("symbol", self.candidateManager)
-		displayer.setFileType("cpp")
-		displayer.show(result)
+		self.showResut(result, pattern, "symbol")
 
 	def changeBetweenHeaderAndcFile(self):
 		try:
@@ -86,6 +91,7 @@ class GTagDriver(Driver):
 		for pattern in s:
 			result.extend(self.candidateManager.findFile(pattern))
 		result = CandidateUntils.unique(result)
+
 		if len(result) == 0:
 			print "can not find file in list: %s"%s
 		elif len(result) == 1:

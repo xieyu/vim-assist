@@ -57,7 +57,7 @@ command! EditVimCommand                py vimCommandDriver.editVimCommandConfig(
 "Maps:
 map <C-f> :FindInMRU<CR>
 map <C-g> :FindFile 
-nmap ;    :FindVimCommand<CR>
+map <C-p>    :FindVimCommand<CR>
 nmap ga :ChangeBetweenHeaderAndcFile<CR>
 nmap gd :FindSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap gs :FindSymbol <C-R>=expand("<cword>")<CR><CR>
