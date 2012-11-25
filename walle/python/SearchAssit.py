@@ -324,6 +324,19 @@ class SearchUntils:
     @staticmethod
     def addToRecent():
         SearchRecentFiles.addToRecent()
+    @staticmethod
+    def findSymbol(arg):
+        searcher = SearchSymbolFromGtags()
+        result = searcher.search(arg)
+        displayer = ControllerFactory.getDisplayController("search-result", SearchAssist)
+        if  len(result) == 0:
+            print "can not find %s"%arg
+        elif(len(result)==1):
+            SearchAssist.acceptCandidate(result[0], "close")
+            vim.command("redraw")
+        else:
+            displayer.show(result)
+
 
 
 class WalleTagsManager:
