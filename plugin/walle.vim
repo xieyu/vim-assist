@@ -19,7 +19,8 @@ endfunction
 call SetUpPath()
 
 "locate"
-call RunWalleFile("client/locate.py")
+call RunWalleFile("python/SearchAssit.py")
+call RunWalleFile("python/VimIDE.py")
 "Commands:"
 "command! EditReposConfig     py file_locate_driver.editReposConfig()
 "command! RefreshFinderRepos  py file_locate_driver.refresh()
@@ -31,36 +32,13 @@ call RunWalleFile("client/locate.py")
 
 "for Gtags, please make sure you have GTAGS in your cwd's or its parent's dir
 "or parent's parent dir ...
-command! -nargs=1 GlobalCmd	       py gtagDriver.globalCmd(<q-args>)
-command! -nargs=1 FindFile		   py gtagDriver.findFile(<q-args>)
-command! -nargs=1 FindSymbol     	   py gtagDriver.findSymbol(<q-args>)
-command! -nargs=1 FindSymbolDefine     py gtagDriver.findSymbolDefine(<q-args>)
-command! -nargs=1 FindSymbolRef        py gtagDriver.findSymbolRef(<q-args>)
-command! ChangeBetweenHeaderAndcFile   py gtagDriver.changeBetweenHeaderAndcFile()
-
-"MRU managerment
-command! FindInMRU 		   	   		   py mruDriver.run()
-command! AddToRecent 		   		   py mruDriver.addCurrentToRecent()
-command! EditRecent  				   py mruDriver.editRecentConfig()
-command! -nargs=1 AddPathToRecent 	   py mruDriver.addPathToRecent(<q-args>)
-au BufRead,BufNewFile * 			   py mruDriver.addCurrentToRecent()
-
-"quick find
-command! -nargs=1 FindInBuffer         py quickFindDriver.findInCurrentBuffer(<q-args>)
-command! -nargs=1 FindInAllBuffer      py quickFindDriver.findInAllBuffers(<q-args>)
-
-command! WalleTest  				   py DriverTest()
-
-command! FindVimCommand 		   	   py vimCommandDriver.run()
-command! EditVimCommand                py vimCommandDriver.editVimCommandConfig()
+command! -nargs=1 FindSymbol     	   py SearchUntils.findSymbol(<q-args>)
+au BufRead,BufNewFile * 			   py SearchUntils.addToRecent()
+command! SearchAssist                  py SearchAssist.increamentSearch()
+command! QuickSearch                   py SearchAssist.quickSearch()
+command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
 "Maps:
-map <C-f> :FindInMRU<CR>
-map <C-g> :FindFile 
-map <C-p>    :FindVimCommand<CR>
-nmap ga :ChangeBetweenHeaderAndcFile<CR>
-nmap gd :FindSymbolDefine <C-R>=expand("<cword>")<CR><CR>
+map <C-f> :SearchAssist<CR>
+map <C-g> :QuickSearch<CR>
 nmap gs :FindSymbol <C-R>=expand("<cword>")<CR><CR>
-nmap gr :FindSymbolRef <C-R>=expand("<cword>")<CR><CR>
-nmap g# :FindInBuffer <C-R>=expand("<cword>")<CR><CR>
-nmap g? :FindInAllBuffer <C-R>=expand("<cword>")<CR><CR>

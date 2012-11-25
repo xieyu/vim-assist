@@ -12,3 +12,11 @@ function! VimUtils#firstUsableWindow()
     endwhile
     return -1
 endfunction
+
+function! VimUtils#DisplayMsg(msg)
+    let x=&ruler | let y=&showcmd
+    set noruler noshowcmd
+    redraw
+    echo strpart(a:msg, 0, &columns-1)
+    let &ruler=x | let &showcmd=y
+endfun
