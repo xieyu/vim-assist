@@ -167,11 +167,11 @@ class SearchFileNameFromDatabase(Searcher):
             return []
 
         def regexp(expr, item):
-			pattern = re.compile(expr, re.IGNORECASE)
-			if "/" not in expr:
-				return pattern.match(item) is not None
-			else:
-				return pattern.search(item) is not None
+            pattern = re.compile(expr, re.IGNORECASE)
+            if "/" not in expr:
+                return pattern.match(item) is not None
+            else:
+                return pattern.search(item) is not None
 
         connection = sqlite3.connect(db)
         connection.create_function("REGEXP", 2, regexp)
@@ -367,6 +367,8 @@ class WalleTagsManager:
             base, ext = os.path.splitext(filePath)
             fileName = os.path.basename(filePath)
             connection.execute('insert into FilePaths(fileName, filePath, fileType) values("%s", "%s", "%s")'%(fileName, filePath, ext))
+        connection.execute("create index FileNameIndex on FilePaths(fileName)")
+        connection.execute("create index FilePathIndex on FilePaths(filepath)")
         connection.commit()
 
     @staticmethod
