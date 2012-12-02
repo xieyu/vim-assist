@@ -4,6 +4,7 @@ import re
 import subprocess
 import sqlite3
 from python.VimUi import ControllerFactory
+from fnmatch import fnmatch
 
 class FileCandidate:
     def __init__(self, name, path):
@@ -46,28 +47,6 @@ class CommandCandidate:
     def getDisplayName(self):
         return self.cmdName
 
-
-
-
-class CandidateUntils:
-    @staticmethod
-    def unique(candidates):
-        seen = {}
-        ret = []
-        for candidate in candidates:
-            if not seen.has_key(candidate.getKey()):
-                ret.append(candidate)
-                seen[candidate.getKey()] = True
-        return ret
-
-    @staticmethod
-    def isSubset(needle, haystack):
-        m, n = (0,0)
-        while n < len(needle) and m <len(haystack):
-            if needle[n] == haystack[m] or needle[n].upper() == haystack[m]:
-                n = n + 1
-            m = m + 1
-        return n == len(needle)
 
 class Searcher:
     def prepare(self):
@@ -142,7 +121,11 @@ class SearchRecentFiles(Searcher):
         filePath = vim.current.buffer.name
         if filePath and os.path.exists(filePath):
             configFile = SearchRecentFiles.recentConfigFile
-            recentFiles = [line.strip() for line in open(configFile).readlines()]
+            try:
+                recentFiles = [line.strip() for line in open(configFile).readlines()]
+            except:
+                recentFiles = []
+
             if filePath in recentFiles:
                 return
             recentFiles.append(filePath)
@@ -184,11 +167,11 @@ class SearchFileNameFromDatabase(Searcher):
             return []
 
         def regexp(expr, item):
-            pattern = re.compile(expr, re.IGNORECASE)
-            if "/" not in expr:
-                return pattern.match(item) is not None
-            else:
-                return pattern.search(item) is not None
+			pattern = re.compile(expr, re.IGNORECASE)
+			if "/" not in expr:
+				return pattern.match(item) is not None
+			else:
+				return pattern.search(item) is not None
 
         connection = sqlite3.connect(db)
         connection.create_function("REGEXP", 2, regexp)
@@ -324,6 +307,7 @@ class SearchUntils:
     @staticmethod
     def addToRecent():
         SearchRecentFiles.addToRecent()
+
     @staticmethod
     def findSymbol(arg):
         searcher = SearchSymbolFromGtags()
@@ -336,7 +320,6 @@ class SearchUntils:
             vim.command("redraw")
         else:
             displayer.show(result)
-
 
 
 class WalleTagsManager:
@@ -361,18 +344,13 @@ class WalleTagsManager:
         return databasePath
 
     @staticmethod
-    def getIgnoreDirs():
-        return [".git"]
-
-    @staticmethod
-    def getIgnoreFilePatterns():
-        return []
+    def getIgnoreList():
+        return [".repo", ".git", '.*', '*.bak', '~*', '*~', '*.obj', '*.pdb', '*.res', '*.dll', '*.idb', '*.exe', '*.lib', '*.suo', '*.sdf', '*.exp', '*.so', '*.pyc', 'CMakeFiles']
 
     @staticmethod
     def makeFilePathTags():
         #TODO:make a new thread to do this
         rootPath = WalleTagsManager.getProjectRootPath()
-        ignoredirs = WalleTagsManager.getIgnoreFilePatterns()
         dbPath = WalleTagsManager.getDatabasePath()
         if not dbPath:
             return
@@ -385,16 +363,26 @@ class WalleTagsManager:
 
         connection.execute('create table if not exists FilePaths(fileName varchar(60), filePath text, fileType varchar(10))')
         connection.commit()
-
-        for rootdir, dirs, files in os.walk(rootPath):
-            if os.path.basename(rootdir) not in ignoredirs:
-                for dirName in dirs:
-                    absPath = os.path.join(rootdir, dirName)
-                    fileName = os.path.basename(dirName)
-                    connection.execute('insert into FilePaths(fileName, filePath, fileType) values("%s", "%s", "%s")'%(fileName, absPath, 'dir'))
-                for filePath in files:
-                    base, ext = os.path.splitext(filePath)
-                    fileName = os.path.basename(filePath)
-                    absPath = os.path.join(rootdir, filePath)
-                    connection.execute('insert into FilePaths(fileName, filePath, fileType) values("%s", "%s", "%s")'%(fileName, absPath, ext))
+        for filePath in WalleTagsManager.scan_dir(rootPath):
+            base, ext = os.path.splitext(filePath)
+            fileName = os.path.basename(filePath)
+            connection.execute('insert into FilePaths(fileName, filePath, fileType) values("%s", "%s", "%s")'%(fileName, filePath, ext))
         connection.commit()
+
+    @staticmethod
+    def scan_dir(path):
+        ignoreList = WalleTagsManager.getIgnoreList()
+        def in_ignore_list(f):
+            for i in ignoreList:
+                if fnmatch(f.lower(), i):
+                    return True
+            return False
+
+        fileList = []
+        for root, dirs, files in os.walk(path):
+            fileList.extend([os.path.join(root, f) for f in files if not in_ignore_list(f)])
+
+            toRemove = filter(in_ignore_list, dirs)
+            for j in toRemove:
+                dirs.remove(j)
+        return fileList
