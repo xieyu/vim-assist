@@ -143,6 +143,7 @@ class SearchRecentFiles(Searcher):
                     file.write('\n')
             file.close()
 
+
 class SearchFileNameFromBufferList(Searcher):
     def prepare(self):
         self.filePaths = [buf.name for buf in vim.buffers if buf.name and os.path.exists(buf.name)]
@@ -192,10 +193,15 @@ class SearchSymbolFromGtags(Searcher):
         output = subprocess.check_output(cmd)
         return output
 
-    def search(self, symbol):
+    def searchSymbol(self, symbol):
         symbol = symbol.strip()
         output = self.globalCmd(["-arxs", symbol])
         return  self.createCandidateFromDetailOutput(output)
+
+    def searchSymbolDefine(self, symbol):
+        symbol= symbol.strip()
+        output = self.globalCmd(["-ax", symbol])
+        return self.createCandidateFromDetailOutput(output)
 
     def createCandidateFromDetailOutput(self, output):
         result = []
@@ -300,28 +306,39 @@ class SearchAssist:
             vim.command("%s wincmd w"%curwin)
         return way != "close"
 
-
-
-class SearchUntils:
-    projectFileName = ".walleProject"
     @staticmethod
-    def addToRecent():
-        SearchRecentFiles.addToRecent()
+    def display(result):
 
-    @staticmethod
-    def findSymbol(arg):
-        searcher = SearchSymbolFromGtags()
-        result = searcher.search(arg)
         displayer = ControllerFactory.getDisplayController("search-result", SearchAssist)
-        if  len(result) == 0:
-            print "can not find %s"%arg
-        elif(len(result)==1):
+        if(len(result)==1):
             SearchAssist.acceptCandidate(result[0], "close")
             vim.command("redraw")
         else:
             displayer.show(result)
 
+    @staticmethod
+    def SearchSymbol(arg):
+        searcher = SearchSymbolFromGtags()
+        result = searcher.searchSymbol(arg)
+        if  len(result) == 0:
+            print "can not find %s"%arg
+            return
+        SearchAssist.display(result)
 
+    @staticmethod
+    def SearchSymbolDefine(arg):
+        searcher = SearchSymbolFromGtags()
+        result = searcher.searchSymbolDefine(arg)
+        if  len(result) == 0:
+            print "can not find %s"%arg
+            return
+        SearchAssist.display(result)
+
+
+
+
+class SearchUntils:
+    projectFileName = ".walleProject"
 class WalleTagsManager:
     projectFileName = ".walleProject"
     @staticmethod
