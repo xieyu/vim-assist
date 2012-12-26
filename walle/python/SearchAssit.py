@@ -220,7 +220,7 @@ class GtagsSearcher(Searcher):
 
     def searchSymbol(self, symbol):
         symbol = symbol.strip()
-        output = self.globalCmd(["-arxs", symbol])
+        output = self.globalCmd(["-axr", symbol])
         return  self.createTagCandidate(output)
 
     def searchSymbolDefine(self, symbol):
