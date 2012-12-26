@@ -157,12 +157,18 @@ class SearchFileNameFromBufferList(Searcher):
                 result.append(FileCandidate(fileName, filePath))
         return result
 
-class SearchFileNameFromDatabase(Searcher):
+class WalleTagsSearcher(Searcher):
     def prepare(self):
         pass
-
     def search(self, pattern):
-        db = WalleTagsManager.getDatabasePath()
+        return self.searchFile(pattern)
+
+    def searchFile(self, pattern):
+        db = WalleTagsManager.getTagsPath()
+        if not db:
+            print "please use command :MakeFilePathTags generate tags first"
+            return []
+
         pattern = pattern.strip()
         if pattern is "":
             return []
@@ -187,7 +193,7 @@ class SearchFileNameFromDatabase(Searcher):
 
         return [FileCandidate(toString(fileName), toString(filePath)) for fileName, filePath in cursor.fetchall()]
 
-class SearchSymbolFromGtags(Searcher):
+class GtagsSearcher(Searcher):
     def globalCmd(self, cmd_args):
         cmd = ["global"] + cmd_args
         output = subprocess.check_output(cmd)
@@ -196,14 +202,19 @@ class SearchSymbolFromGtags(Searcher):
     def searchSymbol(self, symbol):
         symbol = symbol.strip()
         output = self.globalCmd(["-arxs", symbol])
-        return  self.createCandidateFromDetailOutput(output)
+        return  self.createTagCandidate(output)
 
     def searchSymbolDefine(self, symbol):
         symbol= symbol.strip()
         output = self.globalCmd(["-ax", symbol])
-        return self.createCandidateFromDetailOutput(output)
+        return self.createTagCandidate(output)
 
-    def createCandidateFromDetailOutput(self, output):
+    def searchFile(self, name):
+        name = name.strip()
+        output = self.globalCmd(["-Pai", name])
+        return self.createFileCandidate(output)
+
+    def createTagCandidate(self, output):
         result = []
         pattern = re.compile("(\S*)\s*(\d*)\s*(\S*)\s*(.*$)")
         for line in output.split("\n"):
@@ -214,7 +225,7 @@ class SearchSymbolFromGtags(Searcher):
                 result.append(iterm)
         return result
 
-    def createCandidateFromBriefOutPut(self, output):
+    def createFileCandidate(self, output):
         result = []
         for filePath in output.split("\n"):
             filePath = filePath.strip()
@@ -235,8 +246,8 @@ class SearchAssist:
             "r" : SearchRecentFiles(),
             }
     searchCommand = {
-            "b" : SearchFileNameFromDatabase(),
-            "s" : SearchSymbolFromGtags()
+            "b" : WalleTagsSearcher(),
+            "s" : GtagsSearcher()
             }
     @staticmethod
     def increamentSearch():
@@ -308,7 +319,9 @@ class SearchAssist:
 
     @staticmethod
     def display(result):
-
+        if  len(result) == 0:
+            print "can not find"
+            return
         displayer = ControllerFactory.getDisplayController("search-result", SearchAssist)
         if(len(result)==1):
             SearchAssist.acceptCandidate(result[0], "close")
@@ -317,37 +330,32 @@ class SearchAssist:
             displayer.show(result)
 
     @staticmethod
-    def SearchSymbol(arg):
-        searcher = SearchSymbolFromGtags()
+    def searchSymbol(arg):
+        searcher = GtagsSearcher()
         result = searcher.searchSymbol(arg)
-        if  len(result) == 0:
-            print "can not find %s"%arg
-            return
         SearchAssist.display(result)
 
     @staticmethod
-    def SearchSymbolDefine(arg):
-        searcher = SearchSymbolFromGtags()
+    def searchSymbolDefine(arg):
+        searcher = GtagsSearcher()
         result = searcher.searchSymbolDefine(arg)
-        if  len(result) == 0:
-            print "can not find %s"%arg
-            return
         SearchAssist.display(result)
 
-
-
-
-class SearchUntils:
-    projectFileName = ".walleProject"
-class WalleTagsManager:
-    projectFileName = ".walleProject"
     @staticmethod
-    def getProjectRootPath():
+    def searchFile(arg):
+        searcher = WalleTagsSearcher()
+        result = searcher.searchFile(arg)
+        SearchAssist.display(result)
+
+class WalleTagsManager:
+    tagsFileName = "walleTags"
+    @staticmethod
+    def getTagsPath():
         parent = vim.eval("getcwd()")
         while parent and True:
-            path = os.path.join(parent, WalleTagsManager.projectFileName)
-            if os.path.exists(path):
-                return parent
+            path = os.path.normpath(os.path.join(parent, WalleTagsManager.tagsFileName))
+            if os.path.isfile(r'%s'%path):
+                return path
             tmpdir = os.path.dirname(parent)
             if tmpdir == "" or tmpdir == "/" or tmpdir == parent:
                 break;
@@ -355,22 +363,13 @@ class WalleTagsManager:
         return None
 
     @staticmethod
-    def getDatabasePath():
-        rootPath = WalleTagsManager.getProjectRootPath()
-        databasePath = os.path.join(rootPath, ".walleTags")
-        return databasePath
-
-    @staticmethod
     def getIgnoreList():
         return [".repo", ".git", '.*', '*.bak', '~*', '*~', '*.obj', '*.pdb', '*.res', '*.dll', '*.idb', '*.exe', '*.lib', '*.suo', '*.sdf', '*.exp', '*.so', '*.pyc', 'CMakeFiles']
 
     @staticmethod
     def makeFilePathTags():
-        #TODO:make a new thread to do this
-        rootPath = WalleTagsManager.getProjectRootPath()
-        dbPath = WalleTagsManager.getDatabasePath()
-        if not dbPath:
-            return
+        rootPath = vim.eval("getcwd()")
+        dbPath = os.path.join(rootPath, WalleTagsManager.tagsFileName)
 
         connection = sqlite3.connect(dbPath)
         try:
