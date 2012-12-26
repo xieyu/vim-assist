@@ -372,6 +372,13 @@ class SearchAssist:
         result = searcher.changeBetweenHeaderAndcFile()
         SearchAssist.display(result)
 
+    @staticmethod
+    def searchSymbolInBuffer(arg):
+        searcher = SearchSymbolInBuffer()
+        searcher.prepare()
+        result =searcher.search(arg)
+        SearchAssist.display(result)
+
 
 class WalleTagsManager:
     tagsFileName = "walleTags"
