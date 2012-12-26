@@ -35,6 +35,7 @@ call RunWalleFile("python/VimIDE.py")
 command! -nargs=1 SearchSymbol     	   py SearchAssist.searchSymbol(<q-args>)
 command! -nargs=1 SearchSymbolDefine   py SearchAssist.searchSymbolDefine(<q-args>)
 command! -nargs=1 SearchFile		   py SearchAssist.searchFile(<q-args>)
+command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
 au BufRead,BufNewFile * 			   py SearchRecentFiles.addToRecent()
 command! SearchAssist                  py SearchAssist.increamentSearch()
@@ -48,3 +49,4 @@ map <C-g> :QuickSearch<CR>
 nmap gs :SearchSymbol <C-R>=expand("<cword>")<CR><CR>
 nmap gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
+nmap ga :ChangeBetweenHeaderAndCFile<CR>

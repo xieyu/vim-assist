@@ -193,6 +193,25 @@ class WalleTagsSearcher(Searcher):
 
         return [FileCandidate(toString(fileName), toString(filePath)) for fileName, filePath in cursor.fetchall()]
 
+    def changeBetweenHeaderAndcFile(self):
+            try:
+                filename = os.path.basename(vim.current.buffer.name)
+            except:
+                return
+            s = []
+            if re.search("\.(h|hpp)$", filename):
+                s.append(re.sub("\.(h|hpp)$", ".cpp", filename))
+                s.append(re.sub("\.(h|hpp)$", ".c", filename))
+                s.append(re.sub("\.(h|hpp)$", ".cc", filename))
+                s.append(re.sub("\.(h|hpp)$", ".m", filename))
+            elif re.search("\.(c|cpp|cc|m)$", filename):
+                s.append(re.sub("\.(c|cpp|cc)$", ".h", filename))
+                s.append(re.sub("\.(c|cpp|cc)$", ".hpp", filename))
+            result = []
+            for pattern in s:
+                result.extend(self.searchFile(pattern))
+            return Utils.unique(result)
+
 class GtagsSearcher(Searcher):
     def globalCmd(self, cmd_args):
         cmd = ["global"] + cmd_args
@@ -318,9 +337,9 @@ class SearchAssist:
         return way != "close"
 
     @staticmethod
-    def display(result):
-        if  len(result) == 0:
-            print "can not find"
+    def display(result, errorMessage = "find nothing :)"):
+        if  not result or len(result) == 0:
+            print errorMessage
             return
         displayer = ControllerFactory.getDisplayController("search-result", SearchAssist)
         if(len(result)==1):
@@ -346,6 +365,13 @@ class SearchAssist:
         searcher = WalleTagsSearcher()
         result = searcher.searchFile(arg)
         SearchAssist.display(result)
+
+    @staticmethod
+    def changeBetweenHeaderAndcFile(arg):
+        searcher = WalleTagsSearcher()
+        result = searcher.changeBetweenHeaderAndcFile()
+        SearchAssist.display(result)
+
 
 class WalleTagsManager:
     tagsFileName = "walleTags"
@@ -404,3 +430,14 @@ class WalleTagsManager:
             for j in toRemove:
                 dirs.remove(j)
         return fileList
+
+class Utils:
+    @staticmethod
+    def unique(candidates):
+            seen = {}
+            ret = []
+            for candidate in candidates:
+                if not seen.has_key(candidate.getKey()):
+                    ret.append(candidate)
+                    seen[candidate.getKey()] = True
+            return ret
