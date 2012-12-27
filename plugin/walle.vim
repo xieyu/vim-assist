@@ -21,6 +21,7 @@ call SetUpPath()
 "locate"
 call RunWalleFile("python/SearchAssit.py")
 call RunWalleFile("python/VimIDE.py")
+call RunWalleFile("python/GitAssist.py")
 "Commands:"
 "command! EditReposConfig     py file_locate_driver.editReposConfig()
 "command! RefreshFinderRepos  py file_locate_driver.refresh()
@@ -36,6 +37,8 @@ command! -nargs=1 SearchSymbol     	   py SearchAssist.searchSymbol(<q-args>)
 command! -nargs=1 SearchSymbolinBuffer     	   py SearchAssist.searchSymbolInBuffer(<q-args>)
 command! -nargs=1 SearchSymbolDefine   py SearchAssist.searchSymbolDefine(<q-args>)
 command! -nargs=1 SearchFile		   py SearchAssist.searchFile(<q-args>)
+command! GitkcurrentLine               py GitAssit.gitkCurrentLine()
+command! GitkLogp                      py GitAssit.gitkLogCurrentBuffer()
 command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
 au BufRead,BufNewFile * 			   py SearchRecentFiles.addToRecent()
@@ -53,3 +56,4 @@ nmap g# :SearchSymbolinBuffer <C-R>=expand("<cword>")<CR><CR>
 nmap gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
 nmap ga :ChangeBetweenHeaderAndCFile<CR>
+nmap<leader>pp :GitkLogp<CR>
