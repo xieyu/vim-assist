@@ -57,3 +57,5 @@ nmap gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
 nmap ga :ChangeBetweenHeaderAndCFile<CR>
 nmap<leader>pp :GitkLogp<CR>
+nmap<leader>pl :GitkcurrentLine<CR>
+
