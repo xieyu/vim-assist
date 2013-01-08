@@ -1,11 +1,16 @@
+if !has("python")
+    echo "need python support!"
+    finish
+endif
 
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 let g:walle_home = s:plugin_path."/../walle/"
-function! RunWalleFile(filename)
-	exec "pyfile ".g:walle_home.a:filename
+
+function! RunPyFile(filename)
+	exec "pyfile ".g:walle_home."Assist/".a:filename
 endfunction
 
-function! SetUpPath()
+function! SetupPath()
 python<<EOF
 import sys
 import os
@@ -16,46 +21,41 @@ sys.path.append(os.path.abspath(walle_home))
 EOF
 endfunction
 
-call SetUpPath()
+call SetupPath()
+call RunPyFile("VimUi.py")
+call RunPyFile("GitAssist.py")
+call RunPyFile("HistoryAssist.py")
+call RunPyFile("GtagsAssist.py")
+call RunPyFile("BufferListAssist.py")
 
-"locate"
-call RunWalleFile("python/SearchAssit.py")
-call RunWalleFile("python/VimIDE.py")
-call RunWalleFile("python/GitAssist.py")
+
 "Commands:"
-"command! EditReposConfig     py file_locate_driver.editReposConfig()
-"command! RefreshFinderRepos  py file_locate_driver.refresh()
-"command! FinderFile          py file_locate_driver.run()
+command! -nargs=1 SearchSymbolRef      py GtagsAssist.searchSymbolRef(<q-args>)
+command! -nargs=1 SearchSymbolDefine   py GtagsAssist.searchSymbolDefine(<q-args>)
 
-"command! -nargs=1 SetTagFile 		   py tag_locate_driver.setTagFile(<q-args>)
-"command! -nargs=1 FindTagByFullName    py tag_locate_driver.findTagByFullName(<q-args>)
+command! -nargs=1 SearchFile		   py GtagsAssist.searchFile(<q-args>)
+
+command! SearchBufferListHot		   py BufferListAssist.searchHot()
+command! SearchHistoryHot              py HistoryAssist.searchHot()
+"command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
 
-"for Gtags, please make sure you have GTAGS in your cwd's or its parent's dir
-"or parent's parent dir ...
-command! -nargs=1 SearchSymbol     	   py SearchAssist.searchSymbol(<q-args>)
-command! -nargs=1 SearchSymbolinBuffer     	   py SearchAssist.searchSymbolInBuffer(<q-args>)
-command! -nargs=1 SearchSymbolDefine   py SearchAssist.searchSymbolDefine(<q-args>)
-command! -nargs=1 SearchFile		   py SearchAssist.searchFile(<q-args>)
 command! GitkcurrentLine               py GitAssit.gitkCurrentLine()
 command! GitkLogp                      py GitAssit.gitkLogCurrentBuffer()
-command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
-au BufRead,BufNewFile * 			   py SearchRecentFiles.addToRecent()
-command! SearchAssist                  py SearchAssist.increamentSearch()
-command! QuickSearch                   py SearchAssist.quickSearch()
-command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
+"command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
+au BufRead,BufNewFile * 			   py HistoryAssist.addToHistory()
 "Maps:
-map <C-f> :SearchAssist<CR>
-map <C-g> :QuickSearch<CR>
 
-nmap gs :SearchSymbol <C-R>=expand("<cword>")<CR><CR>
-nmap g# :SearchSymbolinBuffer <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>r :SearchHistoryHot<CR>
+nmap <leader>b :SearchBufferListHot<CR>
 
-nmap gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
-nmap gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
-nmap ga :ChangeBetweenHeaderAndCFile<CR>
-nmap<leader>pp :GitkLogp<CR>
-nmap<leader>pl :GitkcurrentLine<CR>
+nmap <leader>gs :SearchSymbolRef <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
+"nmap <leader>ga :ChangeBetweenHeaderAndCFile<CR>
+
+nmap<leader>gp :GitkLogp<CR>
+nmap<leader>gl :GitkcurrentLine<CR>
 

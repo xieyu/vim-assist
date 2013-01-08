@@ -1,23 +1,50 @@
-##The story is that##
-finder is a toolbox for searhing things with a quick result window, like the way of command-T
-currently it has MRU managerment, quickSearch in buffers and GTags intergrations
+#Assist for vim#
+As a programmer, there always annoy things to do, such as find file to edit or search the sybmol where it is referenced and where is it defined. 
+so I integrate some usual tools into vim, to make it more comfortable to use vim.
 
-##install and setting##
-###install and config###
-I suggest use *pathgon* to install this plugin, for linux or mac, just put it under dir like ``~/.vim/bundle/``
-or use [vundle](https://github.com/gmarik/vundle).
+##Search Assist##
+###Gtags###
+TODO:has done, need write introduce of it
 
-###commands and maps###
-you can find the commands and maps that defined in ``plugin/walle.vim``, personalize it and enjoy it!!!.
+###history file search###
+TODO:has done, need write introduce of it
 
-###actions in display window###
-####move select###
-* ``Ctrl + j`` select next, 
-* ``Ctrl + k`` select pre
+###buffer list search###
+TODO:has done, need write introduce of it
 
-####open####
-* ``Ctrl + p`` preview the search result 
-* ``Ctrl + o`` and ``double click`` will open serach result, and keep the display window
-* ``Enter`` will open serach result, and close the display window
+###quick search file###
+NEXT: need write code to implment it
+
+###code search###
+PLAN: need write code
+use codesearch tools as backend, integrate it into vim
+https://code.google.com/p/codesearch/
+
+if you put the text into register k, example `` "kyw ``  put a word in register k, then it will 
+search k in current dir with all file type.(code type..)
+
+intereface:
+* SetCsDir a, b, c
+* SetFt cpp, java
+if you set dir and file type, the effect will keep on until you next call this method.
+
+then the search scope will be in dir a, b, c, with type, cpp.
 
 
+
+##Build Assist##
+PLAN:can make, deubug, run, etc..
+
+##shell Assists##
+LONG PLAN:execute cmd from vim
+
+##Edit Assist##
+LONG PLAN:
+
+
+
+##Other##
+###git assit##
+DONE
+
+call gitk show log..

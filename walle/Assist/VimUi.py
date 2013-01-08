@@ -1,6 +1,6 @@
 #a simple abstract layer of VIm intereface
 #Author: xieyu3 at gmail dot com 
-#License: BSD
+#TODO: Clean the ugly code
 import vim
 import string
 import os
@@ -114,7 +114,7 @@ class Widget:
 			else:
 				maxheight = min(self.maxHeight, len(self.content))
 			self.setHeight(max(self.minHeight, maxheight))
-	
+
 	def lock(self):
 		if self.options and "nomodifiable" in self.options:
 			vim.command("setlocal nomodifiable")
@@ -456,7 +456,7 @@ class DisplayController:
     def acceptSelect(self, acceptWay):
         candidate = self.getCurSelectedCandiate()
         if candidate:
-            shouldKeep = self.candidateManager.acceptCandidate(candidate, acceptWay)
+            shouldKeep = self.candidateManager.accept(candidate, acceptWay)
             if not shouldKeep:
                 self.window.close()
 
@@ -514,7 +514,7 @@ class InputMatchController(DisplayController):
     def run(self):
         #FIXME:use right command at here
         userInput = vim.eval('''input("%s")'''%self.prompt)
-        self.candidates = self.candidateManager.searchCandidate(userInput)
+        self.candidates = self.candidateManager.search(userInput)
         if self.candidates:
             self.show(map(lambda item: item.getName(), self.searchResult))
         else:
@@ -543,7 +543,7 @@ class PromptMatchController(DisplayController):
 
     #private
     def userInputListener(self, userInput):
-        self.candidates = self.candidateManager.searchCandidate(userInput)
+        self.candidates = self.candidateManager.search(userInput)
         self.window.setContent(map(lambda item: item.getDisplayName(), self.candidates))
 
 

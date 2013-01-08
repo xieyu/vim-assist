@@ -3,7 +3,7 @@ import vim
 import re
 import subprocess
 import sqlite3
-from python.VimUi import ControllerFactory
+from Assist.VimUi import ControllerFactory
 from fnmatch import fnmatch
 
 class FileCandidate:
