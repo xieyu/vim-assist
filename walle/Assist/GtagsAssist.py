@@ -6,24 +6,33 @@ from Assist.Candidate import CandidateManager
 import os
 
 class GtagsAssist:
+    workdir=None
     #public interface:
     @staticmethod
     def searchSymbolRef(symbol):
         symbol = symbol.strip()
-        output = GtagsAssist.globalCmd(["-axr", symbol])
+        output = GtagsAssist.globalCmd("-axr %s"%symbol)
         CandidateManager.display(GtagsAssist.createTagCandidate(output))
 
     @staticmethod
     def searchSymbolDefine(symbol):
         symbol= symbol.strip()
-        output = GtagsAssist.globalCmd(["-ax", symbol])
+        output = GtagsAssist.globalCmd("-ax %s"%symbol)
         CandidateManager.display(GtagsAssist.createTagCandidate(output))
 
     @staticmethod
     def searchFile(name):
         name = name.strip()
-        output = GtagsAssist.globalCmd(["-Pai", name])
+        output = GtagsAssist.globalCmd("-Pai %s"%name)
         CandidateManager.display(GtagsAssist.createFileCandidate(output))
+
+    @staticmethod
+    def setWorkdir(workdir):
+        workdir = os.path.expandvars(os.path.expanduser(workdir))
+        if os.path.exists(workdir):
+            GtagsAssist.workdir = workdir
+        else:
+            print "%s is note exists"
 
 
     #private helper functions
@@ -52,6 +61,11 @@ class GtagsAssist:
 
     @staticmethod
     def globalCmd(cmd_args):
-        cmd = ["global"] + cmd_args
-        output = subprocess.check_output(cmd)
+        cmd = "global %s" % cmd_args
+        if GtagsAssist.workdir:
+            process = subprocess.Popen(cmd, stdout = subprocess.PIPE, shell = True, cwd = GtagsAssist.workdir)
+        else:
+            process = subprocess.Popen(cmd, stdout = subprocess.PIPE, shell = True)
+        output = process.stdout.read()
+        del process
         return output

@@ -32,6 +32,7 @@ call RunPyFile("BufferListAssist.py")
 "Commands:"
 command! -nargs=1 SearchSymbolRef      py GtagsAssist.searchSymbolRef(<q-args>)
 command! -nargs=1 SearchSymbolDefine   py GtagsAssist.searchSymbolDefine(<q-args>)
+command! -nargs=1 SetGtagsWorkdir      py GtagsAssist.setWorkdir(<q-args>)
 
 command! -nargs=1 SearchFile		   py GtagsAssist.searchFile(<q-args>)
 
@@ -42,6 +43,7 @@ command! SearchHistoryHot              py HistoryAssist.searchHot()
 
 command! Gkblame                    py GitAssit.gitkCurrentLine()
 command! Gklog                      py GitAssit.gitkLogCurrentBuffer()
+command! -nargs=1 Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
