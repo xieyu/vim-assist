@@ -40,8 +40,8 @@ command! SearchHistoryHot              py HistoryAssist.searchHot()
 "command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
 
-command! GitkcurrentLine               py GitAssit.gitkCurrentLine()
-command! GitkLogp                      py GitAssit.gitkLogCurrentBuffer()
+command! Gkblame                    py GitAssit.gitkCurrentLine()
+command! Gklog                      py GitAssit.gitkLogCurrentBuffer()
 
 "command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
@@ -56,6 +56,6 @@ nmap <leader>gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap <leader>gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
 "nmap <leader>ga :ChangeBetweenHeaderAndCFile<CR>
 
-nmap<leader>gp :GitkLogp<CR>
-nmap<leader>gl :GitkcurrentLine<CR>
+nmap<leader>gp :Gklog<CR>
+nmap<leader>gl :Gkblame<CR>
 
