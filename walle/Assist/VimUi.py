@@ -441,7 +441,7 @@ class DisplayController:
     def show(self, candidates):
         self.makeKeyMap()
         self.candidates = candidates
-        self.window.setContent(map(lambda item: item.getDisplayName(), self.candidates))
+        self.window.setContent(map(lambda item: item.displayText(), self.candidates))
         self.window.show()
 
     def makeKeyMap(self):
@@ -456,8 +456,8 @@ class DisplayController:
     def acceptSelect(self, acceptWay):
         candidate = self.getCurSelectedCandiate()
         if candidate:
-            shouldKeep = self.candidateManager.accept(candidate, acceptWay)
-            if not shouldKeep:
+            self.candidateManager.accept(candidate, acceptWay)
+            if self.candidateManager.shouldClose(acceptWay):
                 self.window.close()
 
     def getCurSelectedCandiate(self):
@@ -544,7 +544,7 @@ class PromptMatchController(DisplayController):
     #private
     def userInputListener(self, userInput):
         self.candidates = self.candidateManager.search(userInput)
-        self.window.setContent(map(lambda item: item.getDisplayName(), self.candidates))
+        self.window.setContent(map(lambda item: item.displayText(), self.candidates))
 
 
 

@@ -3,9 +3,9 @@ if !has("python")
     finish
 endif
 
+"SETUP PATH
 let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
 let g:walle_home = s:plugin_path."/../walle/"
-
 function! RunPyFile(filename)
 	exec "pyfile ".g:walle_home."Assist/".a:filename
 endfunction
@@ -15,13 +15,14 @@ python<<EOF
 import sys
 import os
 import vim
-
 walle_home = vim.eval("g:walle_home")
 sys.path.append(os.path.abspath(walle_home))
 EOF
 endfunction
-
 call SetupPath()
+
+
+"load python files
 call RunPyFile("VimUi.py")
 call RunPyFile("GitAssist.py")
 call RunPyFile("HistoryAssist.py")
@@ -30,28 +31,39 @@ call RunPyFile("BufferListAssist.py")
 
 
 "Commands:"
+"gtags command
 command! -nargs=1 SearchSymbolRef      py GtagsAssist.searchSymbolRef(<q-args>)
 command! -nargs=1 SearchSymbolDefine   py GtagsAssist.searchSymbolDefine(<q-args>)
 command! -nargs=1 SetGtagsWorkdir      py GtagsAssist.setWorkdir(<q-args>)
-
 command! -nargs=1 SearchFile		   py GtagsAssist.searchFile(<q-args>)
 
-command! SearchBufferListHot		   py BufferListAssist.searchHot()
+"gtags history
+command! SearchGtagsHistory            py GtagsHistory.searchHot()
+command! ClearGtagsHistory             py GtagsHistory.clear()
+command! EditGtagsHisotry              py GtagsHistory.edit()
+
+"recent files
 command! SearchHistoryHot              py HistoryAssist.searchHot()
-"command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
+command! EditHistory                   py HistoryAssist.edit()
+au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
+"search quick in bufferlist
+command! SearchBufferListHot		   py BufferListAssist.searchHot()
 
+"Gik
 command! Gkblame                    py GitAssit.gitkCurrentLine()
 command! Gklog                      py GitAssit.gitkLogCurrentBuffer()
-command! -nargs=1 Gitk              py GitAssist.gitkCmd(<q-args>)
+command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
-au BufRead,BufNewFile * 			   py HistoryAssist.addToHistory()
-"Maps:
+"command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 
+"Maps:
 nmap <leader>r :SearchHistoryHot<CR>
 nmap <leader>b :SearchBufferListHot<CR>
+nmap <leader>l :SearchGtagsHistory<CR>
+
 
 nmap <leader>gs :SearchSymbolRef <C-R>=expand("<cword>")<CR><CR>
 nmap <leader>gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>

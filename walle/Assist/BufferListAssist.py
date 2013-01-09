@@ -4,7 +4,7 @@ from Assist.Candidate import FileCandidate
 from Assist.Candidate import CandidateManager
 from Assist.CommonUtil import CommonUtil
 
-#TODO:FIXIT, remove the ugly code
+#TODO:FIXIT, remove this  ugly code
 from Assist.VimUi import ControllerFactory
 
 class BufferListAssist:
@@ -18,7 +18,7 @@ class BufferListAssist:
     @staticmethod
     def searchHot():
         BufferListAssist.prepare()
-        CandidateManager.hotSearch(BufferListAssist.HotSearchCallbacker)
+        CandidateManager.searchHot(BufferListAssist.SearchHotCallbacker)
 
     @staticmethod
     def search(pattern):
@@ -26,7 +26,7 @@ class BufferListAssist:
         result = BufferListAssist.hotSearchCallbacker.search(pattern)
         CandidateManager.display(result)
 
-    class HotSearchCallbacker:
+    class SearchHotCallbacker:
         @staticmethod
         def search(pattern):
             result = []
