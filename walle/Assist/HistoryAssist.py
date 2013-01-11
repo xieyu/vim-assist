@@ -23,7 +23,7 @@ class HistoryAssist:
         def search(pattern):
             result = []
             for filePath in HistoryAssist.recentFiles:
-                if CommonUtil.strokeMatch(pattern, filePath):
+                if filePath and CommonUtil.strokeMatch(pattern, filePath):
                     fileName = os.path.basename(filePath)
                     result.append(FileCandidate(fileName, filePath))
             return result
@@ -32,7 +32,7 @@ class HistoryAssist:
     def add():
         filePath = vim.current.buffer.name
         rfiles = SettingManager.get(HistoryAssist.dbKey)
-        if filePath in rfiles:
+        if filePath in rfiles or not os.path.exists(filePath):
             return
         rfiles.append(filePath)
         SettingManager.save(HistoryAssist.dbKey, rfiles)

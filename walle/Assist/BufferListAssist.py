@@ -12,26 +12,17 @@ class BufferListAssist:
     configFile= os.path.join(walle_home, "config/recentFiles")
 
     @staticmethod
-    def prepare():
-        BufferListAssist.filePaths = [buf.name for buf in vim.buffers if buf.name and os.path.exists(buf.name)]
-
-    @staticmethod
     def searchHot():
-        BufferListAssist.prepare()
+        BufferListAssist.filePaths = [buf.name for buf in vim.buffers if buf.name and os.path.exists(buf.name)]
         CandidateManager.searchHot(BufferListAssist.SearchHotCallbacker)
 
-    @staticmethod
-    def search(pattern):
-        BufferListAssist.prepare()
-        result = BufferListAssist.hotSearchCallbacker.search(pattern)
-        CandidateManager.display(result)
 
     class SearchHotCallbacker:
         @staticmethod
         def search(pattern):
             result = []
             for filePath in BufferListAssist.filePaths:
-                if CommonUtil.fileStrokeMatch(pattern, filePath):
+                if CommonUtil.strokeMatch(pattern, filePath):
                     fileName = os.path.basename(filePath)
                     result.append(FileCandidate(fileName, filePath))
             return result
