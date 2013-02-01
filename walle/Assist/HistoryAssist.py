@@ -1,12 +1,10 @@
 import os
 import vim
-from Assist.Candidate import FileCandidate 
-from Assist.Candidate import CandidateManager
+from Assist.SearchIterm import FileIterm
 from Assist.CommonUtil import CommonUtil
 from Assist.CommonUtil import SettingManager
 
-#TODO:FIXIT, remove the ugly code
-from Assist.VimUi import ControllerFactory
+from Assist.VimUi import HotSearchWindow
 
 class HistoryAssist:
     recentFiles = None
@@ -16,16 +14,16 @@ class HistoryAssist:
         HistoryAssist.recentFiles = SettingManager.get(HistoryAssist.dbKey)
         if HistoryAssist.recentFiles is []:
             print "recent history is none"
-        CandidateManager.searchHot(HistoryAssist.SearchHotCallbacker)
+        HotSearchWindow.setbackend(HistoryAssist.SearchBackEnd())
+        HotSearchWindow.show("rent-files")
 
-    class SearchHotCallbacker:
-        @staticmethod
-        def search(pattern):
+    class SearchBackEnd(HotSearchWindowBackEnd):
+        def search(self, pattern):
             result = []
             for filePath in HistoryAssist.recentFiles:
                 if filePath and CommonUtil.strokeMatch(pattern, filePath):
                     fileName = os.path.basename(filePath)
-                    result.append(FileCandidate(fileName, filePath))
+                    result.append(FileIterm(fileName, filePath))
             return result
 
     @staticmethod

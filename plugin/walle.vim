@@ -24,10 +24,10 @@ call SetupPath()
 
 "load python files
 call RunPyFile("VimUi.py")
-call RunPyFile("GitAssist.py")
+"call RunPyFile("GitAssist.py")
 call RunPyFile("HistoryAssist.py")
-call RunPyFile("GtagsAssist.py")
-call RunPyFile("BufferListAssist.py")
+"call RunPyFile("GtagsAssist.py")
+"call RunPyFile("BufferListAssist.py")
 
 
 "Commands:"
@@ -49,17 +49,18 @@ au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
 "search quick in bufferlist
 command! SearchBufferListHot		   py BufferListAssist.searchHot()
+command! Test                          py HotSearchTest()
 
 "Gik
-command! Gkblame                    py GitAssit.gitkCurrentLine()
-command! Gklog                      py GitAssit.gitkLogCurrentBuffer()
+command! Gkblame                    py GitAssist.gitkCurrentLine()
+command! Gklog                      py GitAssist.gitkLogCurrentBuffer()
 command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "command! MakeFilePathTags              py WalleTagsManager.makeFilePathTags()
 
 "command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
-
 "Maps:
+
 nmap <leader>r :SearchHistoryHot<CR>
 nmap <leader>b :SearchBufferListHot<CR>
 nmap <leader>l :SearchGtagsHistory<CR>

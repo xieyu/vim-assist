@@ -18,7 +18,7 @@ class GitAssist:
 
     @staticmethod
     def gitBlame(filePath):
-        return GitAssist.gitCmd("blame %s", filePath)
+        return GitAssist.gitCmd("blame %s" % filePath)
 
     @staticmethod
     def gitkCurrentLine():
@@ -33,4 +33,4 @@ class GitAssist:
     def gitkLogCurrentBuffer():
         filePath = vim.current.buffer.name
         if filePath:
-            GitAssist.gitkCmd("-p %s", filePath)
+            GitAssist.gitkCmd("-p %s" % filePath)
