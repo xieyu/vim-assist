@@ -4,30 +4,26 @@ if !has("python")
 endif
 
 "SETUP PATH
-let s:plugin_path = escape(expand('<sfile>:p:h'), '\')
-let g:walle_home = s:plugin_path."/../walle/"
+let s:pluginPath= escape(expand('<sfile>:p:h'), '\')
+let g:assistHome= s:pluginPath."/../Assist/"
+
 function! RunPyFile(filename)
-	exec "pyfile ".g:walle_home."Assist/".a:filename
+	exec "pyfile ".g:assistHome."python/".a:filename
 endfunction
 
-function! SetupPath()
-python<<EOF
-import sys
-import os
-import vim
-walle_home = vim.eval("g:walle_home")
-sys.path.append(os.path.abspath(walle_home))
-EOF
-endfunction
-call SetupPath()
-
-
+call RunPyFile("Common.py")
 "load python files
 call RunPyFile("VimUi.py")
 "call RunPyFile("GitAssist.py")
 call RunPyFile("HistoryAssist.py")
 "call RunPyFile("GtagsAssist.py")
 "call RunPyFile("BufferListAssist.py")
+function! SearchHistory()
+	call RunPyFile("VimUi.py")
+	call RunPyFile("HistoryAssist.py")
+	python vimAssistSearchWindow = SearchWindow(HistoryAssist())
+	python vimAssistSearchWindow.createShowBuffer("vimAssistSearchWindow")
+endfunction
 
 
 "Commands:"
@@ -43,9 +39,9 @@ command! ClearGtagsHistory             py GtagsHistory.clear()
 command! EditGtagsHisotry              py GtagsHistory.edit()
 
 "recent files
-command! SearchHistoryHot              py HistoryAssist.searchHot()
+command! SearchHistoryHot              py call SearchHistory()
 command! EditHistory                   py HistoryAssist.edit()
-au BufRead,BufNewFile * 			   py HistoryAssist.add()
+"au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
 "search quick in bufferlist
 command! SearchBufferListHot		   py BufferListAssist.searchHot()
@@ -61,7 +57,7 @@ command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 "command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 "Maps:
 
-nmap <leader>r :SearchHistoryHot<CR>
+nmap <leader>r :call SearchHistory()<CR>
 nmap <leader>b :SearchBufferListHot<CR>
 nmap <leader>l :SearchGtagsHistory<CR>
 

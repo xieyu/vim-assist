@@ -1,30 +1,27 @@
 import os
 import vim
-from Assist.SearchIterm import FileIterm
-from Assist.CommonUtil import CommonUtil
-from Assist.CommonUtil import SettingManager
+from SearchIterm import FileIterm
+from Common import CommonUtil
+from Common import SettingManager
 
-from Assist.VimUi import HotSearchWindow
+from VimUi import SearchWindow
+from VimUi import SearchBackend
 
-class HistoryAssist:
+class HistoryAssist(SearchBackend):
     recentFiles = None
     dbKey = "HistoryAssist"
-    @staticmethod
-    def searchHot():
-        HistoryAssist.recentFiles = SettingManager.get(HistoryAssist.dbKey)
-        if HistoryAssist.recentFiles is []:
+    def __init__(self):
+        self.recentFiles = SettingManager.get(HistoryAssist.dbKey)
+        if self.recentFiles is []:
             print "recent history is none"
-        HotSearchWindow.setbackend(HistoryAssist.SearchBackEnd())
-        HotSearchWindow.show("rent-files")
 
-    class SearchBackEnd(HotSearchWindowBackEnd):
-        def search(self, pattern):
-            result = []
-            for filePath in HistoryAssist.recentFiles:
-                if filePath and CommonUtil.strokeMatch(pattern, filePath):
-                    fileName = os.path.basename(filePath)
-                    result.append(FileIterm(fileName, filePath))
-            return result
+    def search(self, pattern):
+        result = []
+        for filePath in self.recentFiles:
+            if filePath and CommonUtil.fileStrokeMatch(pattern, filePath):
+                fileName = os.path.basename(filePath)
+                result.append(FileIterm(fileName, filePath))
+        return result
 
     @staticmethod
     def add():

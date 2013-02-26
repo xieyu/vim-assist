@@ -2,6 +2,8 @@ import string
 import shelve
 import vim
 import os
+import sys
+
 class CommonUtil:
     @staticmethod
     def strokeMatch(key_stroke, filePath):
@@ -14,8 +16,15 @@ class CommonUtil:
                 return False
         return True
 
+    @staticmethod
+    def fileStrokeMatch(key_stroke, filePath):
+        if '/' in key_stroke:
+            return CommonUtil.strokeMatch(key_stroke, filePath)
+        else:
+            return CommonUtil.strokeMatch(key_stroke, os.path.basename(filePath))
+
 class SettingManager:
-    walle_home = vim.eval("g:walle_home")
+    walle_home = vim.eval("g:assistHome")
     configFile= os.path.join(walle_home, "config/shelvedb")
     @staticmethod
     def save(key, value):
@@ -35,12 +44,8 @@ class SettingManager:
         filePath = os.path.join(SettingManager.walle_home, "config/tmp_%s" % key)
         return filePath
 
-def myAssert(condition, message=""):
-    if condition:
-        print message, "pass"
-    else:
-        print message, "fail"
+def initVimAssist():
+    assistHome = vim.eval("g:assistHome")
+    sys.path.append(os.path.abspath(assistHome + "python"))
 
-if __name__=="__main__":
-    myAssert(CommonUtil.fileStrokeMatch("hwd", "hello world"))
-    myAssert(CommonUtil.fileStrokeMatch("oWd", "hello world"))
+initVimAssist()

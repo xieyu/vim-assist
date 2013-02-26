@@ -21,10 +21,13 @@ class FileIterm(SearchIterm):
         wid = vim.eval("VimUtils#firstUsableWindow()")
         vim.command("%s wincmd w" % wid) #try next window
         vim.command("silent e %s" % self.path)
-        #jump back to result window if preview
+        #jump back to result window if preview or close
         if action =="preview":
             vim.command("%s wincmd w" % curwin)
             return False
+
+        if action == "close":
+            vim.command("%s wincmd w"%curwin)
         return True
 
 
@@ -48,4 +51,6 @@ class TagItem(FileIterm):
         if action =="preview":
             vim.command("%s wincmd w"%curwin)
             return False
+        if action == "close":
+            vim.command("%s wincmd w"%curwin)
         return True
