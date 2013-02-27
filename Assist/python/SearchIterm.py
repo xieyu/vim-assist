@@ -1,7 +1,7 @@
 import os
 import vim
 #intereface for searchIterm
-class SearchIterm:
+class SearchIterm(object):
     def displayText(self):
         return ""
 
@@ -17,6 +17,12 @@ class FileIterm(SearchIterm):
         return "%-40s\t%s"%(self.name, self.path)
 
     def onAction(self, action):
+        if action == "yank":
+            vim.command('let @@="%s"' % self.path)
+            vim.command('let @+="%s"' % self.path)
+            print "on line has been yanked"
+            return False
+
         curwin = vim.eval("winnr()")
         wid = vim.eval("VimUtils#firstUsableWindow()")
         vim.command("%s wincmd w" % wid) #try next window
@@ -31,9 +37,9 @@ class FileIterm(SearchIterm):
         return True
 
 
-class TagItem(FileIterm):
+class TagIterm(FileIterm):
     def __init__(self, name, path, lineNumber, codeSnip):
-        FileCandidate.__init__(self, name, path)
+        super(TagIterm, self).__init__(name, path)
         self.lineNumber = lineNumber
         self.codeSnip = codeSnip
 
@@ -41,6 +47,12 @@ class TagItem(FileIterm):
         return "%-30s\t%-10s\t%-50s"%(os.path.basename(self.path), self.lineNumber, self.codeSnip)
 
     def onAction(self, action):
+        if action == "yank":
+            vim.command('let @@="%s"' % self.name)
+            vim.command('let @+="%s"' % self.name)
+            print "on line has been yanked"
+            return False
+
         curwin = vim.eval("winnr()")
         wid = vim.eval("VimUtils#firstUsableWindow()")
         vim.command("%s wincmd w" % wid) #try next window

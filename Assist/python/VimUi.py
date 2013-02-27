@@ -7,54 +7,60 @@ class SearchBackend:
         return []
 
     def getKeyActionMaps(self):
-        return [("<cr>","close"),("<2-LeftMouse>","preview"),("<c-o>","preview"), ("<c-p>", "preview")]
+        return [("<cr>","close"),("<2-LeftMouse>","preview"),("<c-o>","preview"), ("<c-p>", "preview"), ("<c-y>", "yank")]
 
     def handle(self, action, iterm):
         return iterm.onAction(action)
 
+    def getInitDisplayIterms(self):
+        return []
 
-class Prompt(object) :
-    def __init__(self):
-        self.key_strokes = []
+class DisplayBackend:
+    def getDisplayIterms(self):
+        return []
 
-    def getName(self):
-        return "".join(self.key_strokes)
+    def getKeyActionMaps(self):
+        return [("<cr>","close"),("<2-LeftMouse>","preview"),("<c-o>","preview"), ("<c-p>", "preview"), ("<c-y>", "yank")]
 
-    def append(self,char):
-        self.key_strokes.append(char)
+    def handle(self, action, iterm):
+        return iterm.onAction(action)
 
-    def deleteLast(self):
-        self.key_strokes = self.key_strokes[0:-1]
+class ItermsDisplayer(DisplayBackend):
+    def __init__(self, iterms):
+        self.iterms = iterms
 
-    def show(self):
-        vim.command("echo '%s%s'" % (">> ", self.getName() ))
+    def getDisplayIterms(self):
+        return self.iterms
 
-class SearchWindow:
+class ItermsFilter(SearchBackend):
+    def __init__(self, iterms):
+        self.iterms = iterms
+
+    def getInitDisplayIterms(self):
+        return self.iterms
+
+    def search(self, word):
+        return [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
+
+    def itermPassCheck(self, world, iterm):
+        return True
+
+
+class DisplayWindow(object):
     def __init__(self, backend):
-        self.prompt = Prompt()
         self.backend = backend
-        self.searchResultIterms = []
+        self.iterms = []
 
-    @staticmethod
-    def runApp(backend):
-        global vimAssistSearchWindow
-        vimAssistSearchWindow = SearchWindow(backend)
-        vimAssistSearchWindow.createShowBuffer("vimAssistSearchWindow")
-
-
-    def showMatchedResult(self):
-        pat = self.prompt.getName()
-        self.searchResultIterms = self.backend.search(pat)
+    def showIterms(self, iterms):
         buffer = vim.current.buffer
         buffer[:] = None
-        for i, iterm in enumerate(self.searchResultIterms):
+        for i, iterm in enumerate(iterms):
             if i == 0 and len(buffer) == 1 and buffer[0] == "":
                 buffer[0] = iterm.displayText()
             else:
                 buffer.append(iterm.displayText())
-        win_height = min(len(self.searchResultIterms), 15)
+        win_height = max(min(len(iterms), 25), 4)
         vim.command("resize %s" % str(win_height) )
-
 
     def saveEnv(self):
         self.timeoutlen = vim.eval("&timeoutlen")
@@ -90,19 +96,17 @@ class SearchWindow:
 
         vim.command("set report=%s" % self.report )
         vim.command("set sidescroll=%s" % self.sidescroll)
-        vim.command("set sidescrolloff=%s" % self.sidescrolloff) 
+        vim.command("set sidescrolloff=%s" % self.sidescrolloff)
 
         vim.command("set guicursor=%s" % self.guicursor)
         vim.command("highlight Cursor guifg=black guibg=%s" % (self.cursor_bg))
-
 
     def restoreWinsize(self):
         for i in range(0,len(self.winheights)):
             vim.command("exec '%s wincmd w'" % str(i+1) )
             vim.command("resize %s" % self.winheights[i])
 
-
-    def createShowBuffer(self, varName):
+    def createShowBuffer(self):
         self.saveEnv()
         vim.command("silent! keepalt botright 1split explorer_buffer")
         vim.command("setlocal bufhidden=delete")
@@ -131,23 +135,27 @@ class SearchWindow:
         if bg :
             vim.command("highlight Cursor guifg=black guibg=%s" % (bg))
 
-        printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
+    def doMapKeys(self, selfName):
         mapcmd = "noremap <silent> <buffer>"
-
-        for byte in printables :
-            vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, varName, byte))
-
-        vim.command("%s  <Tab>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, varName, "Tab"))
-        vim.command("%s  <BS>     :python %s.onKeyPressed('%s')<cr>" %(mapcmd, varName, "BS"))
-        vim.command("%s  <Del>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, varName, "Del"))
-        vim.command("%s  <Esc>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, varName, "ESC"))
-        vim.command("%s  <C-j>    :python %s.onCursorMove('down')<cr>" %(mapcmd, varName))
-        vim.command("%s  <C-k>    :python %s.onCursorMove('up')<cr>" %(mapcmd, varName))
-        vim.command("%s  <C-y>    :python %s.onYankContent()<cr>" %(mapcmd, varName))
+        vim.command("%s  <Tab>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "Tab"))
+        vim.command("%s  <BS>     :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "BS"))
+        vim.command("%s  <Del>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "Del"))
+        vim.command("%s  <Esc>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "ESC"))
+        vim.command("%s  <C-j>    :python %s.onCursorMove('down')<cr>" %(mapcmd, selfName))
+        vim.command("%s  <C-k>    :python %s.onCursorMove('up')<cr>" %(mapcmd, selfName))
 
         for keyMap in self.backend.getKeyActionMaps():
-            vim.command("%s %s :python %s.handleKeyAction('%s')<CR>"%(mapcmd, keyMap[0], varName, keyMap[1]))
+            vim.command("%s %s :python %s.handleKeyAction('%s')<CR>"%(mapcmd, keyMap[0], selfName, keyMap[1]))
 
+    def show(self, selfName):
+        self.createShowBuffer()
+        self.doMapKeys(selfName)
+        self.iterms = self.backend.getDisplayIterms()
+        self.showIterms(self.iterms)
+
+    def onKeyPressed(self, key):
+        if key == "ESC":
+            self.clean()
 
     def onPastContent(self):
         content = vim.eval("getreg('+')")
@@ -165,33 +173,12 @@ class SearchWindow:
         else :
             if row < len(work_buffer) : win.cursor = ( row+1 , col)
 
-    def yankContent(self):
-        work_buffer=vim.current.buffer
-        row,col = vim.current.window.cursor
-        content = re.escape( work_buffer[row-1])
-        vim.command('let @@="%s"' % content )
-        print "line has been yanked."
-
-    def onKeyPressed(self, key):
-        if key == "Tab" :
-            pass
-        elif key == "BS" or key == "Del":
-            self.prompt.deleteLast()
-            self.prompt.show()
-            self.showMatchedResult()
-        elif key == "ESC":
-            self.clean()
-        else :
-            self.prompt.append(key)
-            self.prompt.show()
-            self.showMatchedResult()
-
-    def handleKeyAction(self, key):
+    def handleKeyAction(self, action):
         row, col = vim.current.window.cursor
-        if len(self.searchResultIterms) < row:
+        if len(self.iterms) < row:
             return
-        iterm = self.searchResultIterms[row - 1]
-        shouldCloseWindow = self.backend.handle(key, iterm)
+        iterm = self.iterms[row - 1]
+        shouldCloseWindow = self.backend.handle(action, iterm)
         if shouldCloseWindow:
             self.clean()
 
@@ -200,4 +187,56 @@ class SearchWindow:
         vim.command("echo ''")
         self.restoreEnv()
         self.restoreWinsize()
-        vim.command("exec '%s wincmd w'" % self.last_winnr)
+
+class Prompt(object) :
+    def __init__(self):
+        self.key_strokes = []
+
+    def getName(self):
+        return "".join(self.key_strokes)
+
+    def append(self,char):
+        self.key_strokes.append(char)
+
+    def deleteLast(self):
+        self.key_strokes = self.key_strokes[0:-1]
+
+    def show(self):
+        vim.command("echo '%s%s'" % (">> ", self.getName() ))
+
+class SearchWindow(DisplayWindow):
+    def __init__(self, backend):
+        self.prompt = Prompt()
+        self.backend = backend
+
+    def show(self, selfName):
+        self.createShowBuffer()
+        self.doMapKeys(selfName)
+        self.iterms = self.backend.getInitDisplayIterms()
+        self.showIterms(self.iterms)
+
+    def showMatchedIterms(self):
+        pat = self.prompt.getName()
+        self.iterms = self.backend.search(pat)
+        self.showIterms(self.iterms)
+
+    def doMapKeys(self, selfName):
+        super(SearchWindow, self).doMapKeys(selfName)
+        printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
+        mapcmd = "noremap <silent> <buffer>"
+        for byte in printables :
+            vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, selfName, byte))
+
+    def onKeyPressed(self, key):
+        if key == "Tab" :
+            pass
+        elif key == "BS" or key == "Del":
+            self.prompt.deleteLast()
+            self.prompt.show()
+            self.showMatchedIterms()
+        elif key == "ESC":
+            self.clean()
+        else :
+            self.prompt.append(key)
+            self.prompt.show()
+            self.showMatchedIterms()

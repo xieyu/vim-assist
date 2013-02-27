@@ -19,29 +19,33 @@ call RunPyFile("HistoryAssist.py")
 "call RunPyFile("GtagsAssist.py")
 "call RunPyFile("BufferListAssist.py")
 function! SearchHistory()
-	call RunPyFile("VimUi.py")
 	call RunPyFile("HistoryAssist.py")
-	python vimAssistSearchWindow = SearchWindow(HistoryAssist())
-	python vimAssistSearchWindow.createShowBuffer("vimAssistSearchWindow")
+	python vimAssistSearchWindow = SearchWindow(HistorySearchBackend(HistoryAssist.getHistoryIterms()))
+	python vimAssistSearchWindow.show("vimAssistSearchWindow")
+endfunction
+
+function! SearchGtagsSymbolDefine(pattern)
+	call RunPyFile("GtagsAssist.py")
+	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
+	python displayWindow.show("displayWindow")
+endfunction
+
+function! SearchGtagsSymbolRef(pattern)
+	call RunPyFile("GtagsAssist.py")
+	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
+	python displayWindow.show("displayWindow")
 endfunction
 
 
 "Commands:"
 "gtags command
-command! -nargs=1 SearchSymbolRef      py GtagsAssist.searchSymbolRef(<q-args>)
-command! -nargs=1 SearchSymbolDefine   py GtagsAssist.searchSymbolDefine(<q-args>)
-command! -nargs=1 SetGtagsWorkdir      py GtagsAssist.setWorkdir(<q-args>)
-command! -nargs=1 SearchFile		   py GtagsAssist.searchFile(<q-args>)
-
-"gtags history
-command! SearchGtagsHistory            py GtagsHistory.searchHot()
-command! ClearGtagsHistory             py GtagsHistory.clear()
-command! EditGtagsHisotry              py GtagsHistory.edit()
+command! -nargs=1 SearchSymbolDefine   call SearchGtagsSymbolDefine(<q-args>)
+command! -nargs=1 SearchSymbolRef      call SearchGtagsSymbolRef(<q-args>)
 
 "recent files
 command! SearchHistoryHot              py call SearchHistory()
 command! EditHistory                   py HistoryAssist.edit()
-"au BufRead,BufNewFile * 			   py HistoryAssist.add()
+au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
 "search quick in bufferlist
 command! SearchBufferListHot		   py BufferListAssist.searchHot()

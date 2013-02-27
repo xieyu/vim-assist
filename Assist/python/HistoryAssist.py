@@ -4,21 +4,20 @@ from SearchIterm import FileIterm
 from Common import CommonUtil
 from Common import SettingManager
 
-from VimUi import SearchWindow
-from VimUi import SearchBackend
+from VimUi import ItermsFilter
 
-class HistoryAssist(SearchBackend):
+class HistoryAssist:
     recentFiles = None
     dbKey = "HistoryAssist"
-    def __init__(self):
-        self.recentFiles = SettingManager.get(HistoryAssist.dbKey)
-        if self.recentFiles is []:
+    @staticmethod
+    def getHistoryIterms():
+        result = []
+        recentFiles = SettingManager.get(HistoryAssist.dbKey)
+        if recentFiles is []:
             print "recent history is none"
 
-    def search(self, pattern):
-        result = []
-        for filePath in self.recentFiles:
-            if filePath and CommonUtil.fileStrokeMatch(pattern, filePath):
+        for filePath in recentFiles:
+            if filePath:
                 fileName = os.path.basename(filePath)
                 result.append(FileIterm(fileName, filePath))
         return result
@@ -60,4 +59,7 @@ class HistoryAssist(SearchBackend):
         f.close();
         pass
 
+class HistorySearchBackend(ItermsFilter):
+    def itermPassCheck(self, word, iterm):
+        return CommonUtil.fileStrokeMatch(word, iterm.path)
 
