@@ -8,6 +8,9 @@ class SearchIterm(object):
     def onAction(self, action):
         return True
 
+    def equal(self, iterm):
+        return True
+
 class FileIterm(SearchIterm):
     def __init__(self, name, path):
         self.name = name
@@ -35,6 +38,8 @@ class FileIterm(SearchIterm):
         if action == "close":
             vim.command("%s wincmd w"%curwin)
         return True
+    def equal(self, iterm):
+        return self.name is iterm.name and self.path is iterm.path
 
 
 class TagIterm(FileIterm):
@@ -66,3 +71,8 @@ class TagIterm(FileIterm):
         if action == "close":
             vim.command("%s wincmd w"%curwin)
         return True
+
+    def equal(self, iterm):
+        if super(TagIterm, self).equal(iterm):
+            return self.lineNumber is iterm.lineNumer and self.codeSnip is iterm.codeSnip
+        return False

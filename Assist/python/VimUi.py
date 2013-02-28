@@ -130,10 +130,10 @@ class DisplayWindow(object):
         vim.command("set sidescroll=0")
         vim.command("set sidescrolloff=0")
 
-        vim.command("set guicursor+=a:blinkon0")
-        bg = vim.eval("""synIDattr(synIDtrans(hlID("Normal")), "bg")""")
-        if bg :
-            vim.command("highlight Cursor guifg=black guibg=%s" % (bg))
+        #vim.command("set guicursor+=a:blinkon0")
+        #bg = vim.eval("""synIDattr(synIDtrans(hlID("Normal")), "bg")""")
+        #if bg :
+        #    vim.command("highlight Cursor guifg=black guibg=%s" % (bg))
 
     def doMapKeys(self, selfName):
         mapcmd = "noremap <silent> <buffer>"

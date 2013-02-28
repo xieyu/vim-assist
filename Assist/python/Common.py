@@ -22,6 +22,13 @@ class CommonUtil:
             return CommonUtil.strokeMatch(key_stroke, filePath)
         else:
             return CommonUtil.strokeMatch(key_stroke, os.path.basename(filePath))
+    @staticmethod
+    def wordStrokeMatch(key_stroke, codeline):
+        words = codeline.split(" ")
+        for w in words:
+            if CommonUtil.strokeMatch(key_stroke, w):
+                return True
+        return False
 
 class SettingManager:
     walle_home = vim.eval("g:assistHome")

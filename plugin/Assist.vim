@@ -16,6 +16,8 @@ call RunPyFile("Common.py")
 call RunPyFile("VimUi.py")
 "call RunPyFile("GitAssist.py")
 call RunPyFile("HistoryAssist.py")
+call RunPyFile("BookMarkAssist.py")
+call RunPyFile("GtagsAssist.py")
 "call RunPyFile("GtagsAssist.py")
 "call RunPyFile("BufferListAssist.py")
 function! SearchHistory()
@@ -25,25 +27,28 @@ function! SearchHistory()
 endfunction
 
 function! SearchGtagsSymbolDefine(pattern)
-	call RunPyFile("GtagsAssist.py")
 	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
 function! SearchGtagsSymbolRef(pattern)
-	call RunPyFile("GtagsAssist.py")
 	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
+function! SearchBookMark()
+	python displayWindow = SearchWindow(BookMarkSearchBackend(BookMarkAssist.getBookMarkIterms()))
+	python displayWindow.show("displayWindow")
+endfunction
 
 "Commands:"
 "gtags command
 command! -nargs=1 SearchSymbolDefine   call SearchGtagsSymbolDefine(<q-args>)
 command! -nargs=1 SearchSymbolRef      call SearchGtagsSymbolRef(<q-args>)
+command! AddBookmark                   py BookMarkAssist.addCurrentCursorToBookmark()
+command! EditBookmark                  py BookMarkAssist.edit()
 
 "recent files
-command! SearchHistoryHot              py call SearchHistory()
 command! EditHistory                   py HistoryAssist.edit()
 au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
@@ -62,8 +67,9 @@ command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 "Maps:
 
 nmap <leader>r :call SearchHistory()<CR>
-nmap <leader>b :SearchBufferListHot<CR>
 nmap <leader>l :SearchGtagsHistory<CR>
+nmap <leader>b :call SearchBookMark()<CR>
+nmap <leader>ab :AddBookmark<CR>
 
 
 nmap <leader>gs :SearchSymbolRef <C-R>=expand("<cword>")<CR><CR>
