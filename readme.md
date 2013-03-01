@@ -2,10 +2,13 @@
 As a programmer, there always annoy things to do, such as find file to edit or search the sybmol where it is referenced and where is it defined. 
 so I integrate some useful tools into vim, to make it more comfortable to use vim.
 
-The world is under your finger, you can jump to anywherer freely, find what you need qucily, Life is better with it, isn't it, haha.
+The world is under your finger, you can jump to anywhere freely, find what you need quicly, life is better with it, isn't it, haha.
 
 ##Require##
 Require python and vim compled with python feature.
+
+##Install##
+recommand to use pathogen of vundle to install it
 
 ##Search Assist##
 There are same keymap for all the search window opened by searchAssist:
