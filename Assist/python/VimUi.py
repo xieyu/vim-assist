@@ -2,36 +2,6 @@
 import vim
 import re
 
-class SearchBackend:
-    def search(self, word):
-        return []
-
-    def getKeyActionMaps(self):
-        return [("<cr>","close"),("<2-LeftMouse>","preview"),("<c-o>","preview"), ("<c-p>", "preview"), ("<c-y>", "yank")]
-
-    def handle(self, action, iterm):
-        return iterm.onAction(action)
-
-    def getInitDisplayIterms(self):
-        return []
-
-class DisplayBackend:
-    def getDisplayIterms(self):
-        return []
-
-    def getKeyActionMaps(self):
-        return [("<cr>","close"),("<2-LeftMouse>","preview"),("<c-o>","preview"), ("<c-p>", "preview"), ("<c-y>", "yank")]
-
-    def handle(self, action, iterm):
-        return iterm.onAction(action)
-
-class ItermsDisplayer(DisplayBackend):
-    def __init__(self, iterms):
-        self.iterms = iterms
-
-    def getDisplayIterms(self):
-        return self.iterms
-
 class DisplayWindow(object):
     def __init__(self, backend):
         self.backend = backend
