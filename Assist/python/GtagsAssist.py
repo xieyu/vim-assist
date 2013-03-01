@@ -22,7 +22,7 @@ class GtagsAssist:
         return GtagsAssist.createTagCandidate(output)
 
     @staticmethod
-    def searchFile(symbol):
+    def searchFile(name):
         name = name.strip()
         output = GtagsAssist.globalCmd("-Pai %s" % name)
         return GtagsAssist.createFileCandidate(output)

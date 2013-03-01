@@ -28,14 +28,19 @@ function! SearchHistory()
 	python vimAssistSearchWindow.show("vimAssistSearchWindow")
 endfunction
 
-function! SearchGtagsSymbolDefine(pattern)
+function! GtagsSymbolDefine(pattern)
 	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
 
-function! SearchGtagsSymbolRef(pattern)
+function! GtagsSymbolRef(pattern)
 	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
+	python displayWindow.show("displayWindow")
+endfunction
+
+function! GtagsFile(pattern)
+	python displayWindow = SearchWindow(FileSearchBackend(GtagsAssist.searchFile(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
@@ -51,8 +56,11 @@ endfunction
 
 "Commands:"
 "gtags command
-command! -nargs=1 SearchSymbolDefine   call SearchGtagsSymbolDefine(<q-args>)
-command! -nargs=1 SearchSymbolRef      call SearchGtagsSymbolRef(<q-args>)
+command! -nargs=1 GtagsSymbolDefine     call GtagsSymbolDefine(<q-args>)
+command! -nargs=1 GtagsSymbolRef        call GtagsSymbolRef(<q-args>)
+command! -nargs=1 GtagsFile             call GtagsFile(<q-args>)
+command! -nargs=1 GtagsWorkDir          py   GtagsAssist.setWorkdir(<q-args>)
+
 
 command! -nargs=1 Ag                   call AgSearch(<q-args>)
 command! -nargs=1 AgWorkdir         py AgAssist.setWorkdir(<q-args>)
@@ -61,15 +69,14 @@ command! AgClearWorkdir                py AgAssist.clearWorkdir()
 
 "book marks commands
 command! AddBookmark                   py BookMarkAssist.addCurrentCursorToBookmark()
-command! EditBookmark                  py BookMarkAssist.edit()
+command! SearchBookMark                call SearchBookMark()
+"command! EditBookmark                  py BookMarkAssist.edit()
 
 "recent files
+command! SearchHistory                 call SearchHistory()
 command! EditHistory                   py HistoryAssist.edit()
 au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
-"search quick in bufferlist
-command! SearchBufferListHot		   py BufferListAssist.searchHot()
-command! Test                          py HotSearchTest()
 
 "Gik
 command! Gkblame                    py GitAssist.gitkCurrentLine()
@@ -81,17 +88,18 @@ command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 "command! ChangeBetweenHeaderAndCFile py SearchAssist.changeBetweenHeaderAndcFile(<q-args>)
 "Maps:
 
-nmap <leader>r :call SearchHistory()<CR>
+nmap <leader>r :SearchHistory<CR>
 nmap <leader>l :SearchGtagsHistory<CR>
-nmap <leader>b :call SearchBookMark()<CR>
+nmap <leader>b :SearchBookMark<CR>
 nmap <leader>ab :AddBookmark<CR>
 
 "use ag search
-nmap <leader>ga :Ag  <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>ag :Ag  <C-R>=expand("<cword>")<CR><CR>
 
-nmap <leader>gs :SearchSymbolRef <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gf :SearchFile <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>gs :GtagsSymbolRef <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>gd :GtagsSymbolDefine <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>gf :GtagsFile 
+
 "nmap <leader>ga :ChangeBetweenHeaderAndCFile<CR>
 
 nmap<leader>gp :Gklog<CR>
