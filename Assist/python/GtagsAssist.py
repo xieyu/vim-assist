@@ -70,7 +70,3 @@ class GtagsAssist:
         output = process.stdout.read()
         del process
         return output
-
-class GtagsSearchBackend(ItermsFilter):
-    def itermPassCheck(self, word, iterm):
-        return CommonUtil.fileStrokeMatch(word, iterm.path)

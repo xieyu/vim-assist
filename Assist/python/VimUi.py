@@ -32,20 +32,6 @@ class ItermsDisplayer(DisplayBackend):
     def getDisplayIterms(self):
         return self.iterms
 
-class ItermsFilter(SearchBackend):
-    def __init__(self, iterms):
-        self.iterms = iterms
-
-    def getInitDisplayIterms(self):
-        return self.iterms
-
-    def search(self, word):
-        return [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
-
-    def itermPassCheck(self, world, iterm):
-        return True
-
-
 class DisplayWindow(object):
     def __init__(self, backend):
         self.backend = backend

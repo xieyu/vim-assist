@@ -15,29 +15,37 @@ call RunPyFile("Common.py")
 "load python files
 call RunPyFile("VimUi.py")
 "call RunPyFile("GitAssist.py")
+call RunPyFile("SearchBackend.py")
 call RunPyFile("HistoryAssist.py")
 call RunPyFile("BookMarkAssist.py")
 call RunPyFile("GtagsAssist.py")
+call RunPyFile("AgAssist.py")
 "call RunPyFile("GtagsAssist.py")
 "call RunPyFile("BufferListAssist.py")
 function! SearchHistory()
 	call RunPyFile("HistoryAssist.py")
-	python vimAssistSearchWindow = SearchWindow(HistorySearchBackend(HistoryAssist.getHistoryIterms()))
+	python vimAssistSearchWindow = SearchWindow(FileSearchBackend(HistoryAssist.getHistoryIterms()))
 	python vimAssistSearchWindow.show("vimAssistSearchWindow")
 endfunction
 
 function! SearchGtagsSymbolDefine(pattern)
-	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
+	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
+
 function! SearchGtagsSymbolRef(pattern)
-	python displayWindow = SearchWindow(GtagsSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
+	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
 function! SearchBookMark()
-	python displayWindow = SearchWindow(BookMarkSearchBackend(BookMarkAssist.getBookMarkIterms()))
+	python displayWindow = SearchWindow(TagSearchBackend(BookMarkAssist.getBookMarkIterms()))
+	python displayWindow.show("displayWindow")
+endfunction
+
+function! AgSearch(pattern)
+	python displayWindow = SearchWindow(TagSearchBackend(AgAssist.search(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
@@ -45,6 +53,13 @@ endfunction
 "gtags command
 command! -nargs=1 SearchSymbolDefine   call SearchGtagsSymbolDefine(<q-args>)
 command! -nargs=1 SearchSymbolRef      call SearchGtagsSymbolRef(<q-args>)
+
+command! -nargs=1 Ag                   call AgSearch(<q-args>)
+command! -nargs=1 AgWorkdir         py AgAssist.setWorkdir(<q-args>)
+command! AgClearWorkdir                py AgAssist.clearWorkdir()
+
+
+"book marks commands
 command! AddBookmark                   py BookMarkAssist.addCurrentCursorToBookmark()
 command! EditBookmark                  py BookMarkAssist.edit()
 
@@ -71,6 +86,8 @@ nmap <leader>l :SearchGtagsHistory<CR>
 nmap <leader>b :call SearchBookMark()<CR>
 nmap <leader>ab :AddBookmark<CR>
 
+"use ag search
+nmap <leader>ga :Ag  <C-R>=expand("<cword>")<CR><CR>
 
 nmap <leader>gs :SearchSymbolRef <C-R>=expand("<cword>")<CR><CR>
 nmap <leader>gd :SearchSymbolDefine <C-R>=expand("<cword>")<CR><CR>

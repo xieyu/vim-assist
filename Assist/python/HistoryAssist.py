@@ -4,8 +4,6 @@ from SearchIterm import FileIterm
 from Common import CommonUtil
 from Common import SettingManager
 
-from VimUi import ItermsFilter
-
 class HistoryAssist:
     recentFiles = None
     dbKey = "HistoryAssist"
@@ -59,7 +57,4 @@ class HistoryAssist:
         f.close();
         pass
 
-class HistorySearchBackend(ItermsFilter):
-    def itermPassCheck(self, word, iterm):
-        return CommonUtil.fileStrokeMatch(word, iterm.path)
 

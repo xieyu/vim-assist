@@ -4,7 +4,6 @@ import vim
 from SearchIterm import TagIterm
 from Common import CommonUtil
 from Common import SettingManager
-from VimUi import ItermsFilter
 
 class BookMarkAssist:
     dbKey = "BookMarkAssist"
@@ -48,19 +47,3 @@ class BookMarkAssist:
     @staticmethod
     def dump(filePath):
         pass
-
-
-class BookMarkSearchBackend(ItermsFilter):
-    def itermPassCheck(self, word, iterm):
-        symbols = word.split("@")
-        if len(symbols) == 1:
-            return CommonUtil.fileStrokeMatch(symbols[0], iterm.path)
-        elif len(symbols) == 2:
-            passFlag = True
-            if symbols[0] is not "":
-                passFlag = CommonUtil.fileStrokeMatch(symbols[0], iterm.path)
-            if passFlag and symbols[1] is not "":
-                passFlag = CommonUtil.strokeMatch(symbols[1], iterm.codeSnip)
-            return passFlag
-        return True
-
