@@ -48,7 +48,8 @@ This assist provide commands:
 a bookmark is in follow format:
 ```
 filePath  lineNum  codeSnip
-``
+```
+
 for exmaple:
 ```
 ~/codes/demos/foo.c  100  int main(int argc ,char* argv)
