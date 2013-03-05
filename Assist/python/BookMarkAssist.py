@@ -52,11 +52,14 @@ class BookMarkAssist:
     def load():
         storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
         result = []
-        f = open(storeFilePath, 'r')
-        for line in f.readlines():
-            iterm = TagIterm.CreateInstancefromString(line.strip())
-            if iterm:
-                result.append(iterm)
+        try:
+            f = open(storeFilePath, 'r')
+            for line in f.readlines():
+                iterm = TagIterm.CreateInstancefromString(line.strip())
+                if iterm:
+                    result.append(iterm)
+        except:
+            pass
         return result
 
     @staticmethod
