@@ -6,10 +6,6 @@ The world is under your finger, you can jump to anywhere freely, find what you n
 
 ###Require###
 Require python and vim compled with python feature.
-and you should install following tools for it.
-* ctags
-* gnu global
-* the-silver-searcher
 
 ###Install###
 recommand to use pathogen of vundle to install it
@@ -75,6 +71,7 @@ nmap <leader>b :SearchBookMark<CR>
 ##Gtags##
 [gtags](http://www.gnu.org/software/global/) is very useful tool for search cpp, java, code.
 
+###require###
 This plugin require gtags installed. and generate gtags first. 
 
 ###generate gtags###
@@ -129,7 +126,8 @@ nmap <leader>c :CtagsSearchCurrentFile<CR>
 ##Ag##
 ag [the_silver_searcher](https://github.com/ggreer/the_silver_searcher)can be used as replacement of grep or Ack, its speed is very impressive.
 
-###install ag###
+###require###
+install ag
 ```
 $sudo apt-get install the-silver-searcher
 ```
@@ -146,6 +144,20 @@ this keymap will search the word under cursor in AgWorkdir if you have set it or
 nmap <leader>ag :Ag  <C-R>=expand("<cword>")<CR><CR>
 ```
 The search window opened by Ag assit can use the same with Bookmark, see bookmark section for details.
+
+##Gitk##
+gitk is used to see the log of current file, provide two command
+###command###
+* Gkblame       this command will call gitk show the commit which change current line last time
+* Gklog         this command will call gitk show the change log of current file
+* Gitk <args>   command with args, which is samed as gitk in shell 
+
+###map###
+have to map at here
+```
+nmap<leader>gp :Gklog<CR>
+nmap<leader>gl :Gkblame<CR>
+```
 
 
 ##TEST##
