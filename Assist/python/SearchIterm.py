@@ -53,7 +53,7 @@ class TagIterm(FileIterm):
 
     def onAction(self, action):
         if action == "yank":
-            vim.command('let @@="%s"' % self.name)
+            vim.command('let @@="%s:%s"' % (self.path, self.lineNumber))
             vim.command('let @+="%s"' % self.name)
             print "on line has been yanked"
             return False
@@ -76,3 +76,11 @@ class TagIterm(FileIterm):
         if super(TagIterm, self).equal(iterm):
             return self.lineNumber is iterm.lineNumer and self.codeSnip is iterm.codeSnip
         return False
+
+class CtagIterm(TagIterm):
+    def __init__(self, name, path, lineNumber, codeSnip, symbolType):
+        super(CtagIterm, self).__init__(name, path, lineNumber, codeSnip)
+        self.symbolType = symbolType
+
+    def displayText(self):
+        return "%-30s\t%-20s\t%-10s\t%-50s"%(self.name, self.symbolType, self.lineNumber, self.codeSnip)
