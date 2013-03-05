@@ -4,14 +4,18 @@ so I integrate some useful tools into vim, to make it more comfortable to use vi
 
 The world is under your finger, you can jump to anywhere freely, find what you need quicly, life is better with it, isn't it, haha.
 
-##Require##
+###Require###
 Require python and vim compled with python feature.
+and you should install following tools for it.
+* ctags
+* gnu global
+* the-silver-searcher
 
-##Install##
+###Install###
 recommand to use pathogen of vundle to install it
 
-##Search Assist##
-There are same keymap for all the search window opened by searchAssist:
+#Common intereface#
+There are same keymap for all the search window opened by these assist:
 * `<esc>`   close the search window
 * `<enter>` open file under cursor and close the search window
 * `<c-o>``  open file under cursor without close the search window, and jump to the window that open the file
@@ -19,7 +23,7 @@ There are same keymap for all the search window opened by searchAssist:
 * `<c-j>`   select next one
 * `<c-k>`   select pre one
 
-###historyfile ###
+##historyfile##
 Everyfile you edit, will be record. And then you can search it with key stroke, normally it just compare fileName with your input, but 
 if there '/' in you input, it will compre the full path.
 
@@ -37,7 +41,7 @@ by add follow in `.vimrc`
 let mapleader=","
 ```
 
-###Bookmark###
+##Bookmark##
 Bookmark is very useful when you have lot of code and tracing a bug.
 
 ###commands###
@@ -68,7 +72,7 @@ nmap <leader>b :SearchBookMark<CR>
 * EditBookMark, not provide this command yet. finish it later..
 
 
-###Gtags##
+##Gtags##
 [gtags](http://www.gnu.org/software/global/) is very useful tool for search cpp, java, code.
 
 This plugin require gtags installed. and generate gtags first. 
@@ -111,26 +115,38 @@ nmap <leader>gd :GtagsSymbolDefine <C-R>=expand("<cword>")<CR><CR>
 nmap <leader>gf :GtagsFile 
 ```
 
-###Ag###
+##Ctags##
+ctags at here is used to quick jump to the define of symbol in current file.
+
+###commands###
+* CtagsSearchCurrentFile, this will list all the sybmol in the current file in the search window
+
+###keymaps##
+```
+nmap <leader>c :CtagsSearchCurrentFile<CR>
+```
+
+##Ag##
 ag [the_silver_searcher](https://github.com/ggreer/the_silver_searcher)can be used as replacement of grep or Ack, its speed is very impressive.
 
-###install ag##
+###install ag###
 ```
 $sudo apt-get install the-silver-searcher
 ```
 For other platform follow instraction at [here](https://github.com/ggreer/the_silver_searcher)
 
-##Commands##
+###Commands###
 * ``:Ag [options] {pattern} [{directory}]``, see ``ag help `` for detail
 * ``:AgWorkdir path/to/dir`` set ag work dir, default cwd
 * ``:AgClearWokdir``         set ag workdidr as cwd
 
-##keymaps##
+###keymaps###
 this keymap will search the word under cursor in AgWorkdir if you have set it or cwd
 ```
 nmap <leader>ag :Ag  <C-R>=expand("<cword>")<CR><CR>
 ```
 The search window opened by Ag assit can use the same with Bookmark, see bookmark section for details.
+
 
 ##TEST##
 I use it dailly  on linux platform.  have problem on Mac os now and will fix it later. not test it windows yet.
