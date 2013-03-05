@@ -6,10 +6,13 @@ from Common import CommonUtil
 from Common import SettingManager
 
 class BookMarkAssist:
-    dbKey = "BookMarkAssist"
+    storeFileName = "BookMarks"
+    bookMarks = None
     @staticmethod
     def getBookMarkIterms():
-        return SettingManager.get(BookMarkAssist.dbKey)
+        bookMarks = BookMarkAssist.load()
+        bookMarks.reverse()
+        return bookMarks
 
     @staticmethod
     def addCurrentCursorToBookmark():
@@ -22,28 +25,47 @@ class BookMarkAssist:
             bookmark = TagIterm(fileName, filePath, lineNumber, codeSnip)
             BookMarkAssist.add(bookmark)
 
+
     @staticmethod
     def add(tagIterm):
-        bookmarks = SettingManager.get(BookMarkAssist.dbKey)
-        for b in bookmarks:
+        if BookMarkAssist.bookMarks is None:
+            BookMarkAssist.bookMarks = BookMarkAssist.load()
+
+        for i, b in enumerate(BookMarkAssist.bookMarks):
             if b.equal(tagIterm):
-                return
-        bookmarks.append(tagIterm)
-        SettingManager.save(BookMarkAssist.dbKey, bookmarks)
-
-    @staticmethod
-    def clear():
-        SettingManager.save(BookMarkAssist.dbKey, [])
-
-    @staticmethod
-    def edit():
-        vim.command("autocmd BufWritePost <buffer> py BookMarkAssist.reload()")
-        pass
+                del BookMarkAssist.bookMarks[i]
+                break
+        BookMarkAssist.bookMarks.append(tagIterm)
+        BookMarkAssist.save(BookMarkAssist.bookMarks)
 
     @staticmethod
     def reload():
-        pass
+        BookMarkAssist.bookMarks= BookMarkAssist.load()
 
     @staticmethod
-    def dump(filePath):
+    def edit():
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
+        vim.command("sp %s"% storeFilePath)
+        vim.command("autocmd BufWritePost <buffer> py BookMarkAssist.reload()")
+
+    @staticmethod
+    def load():
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
+        result = []
+        f = open(storeFilePath, 'r')
+        for line in f.readlines():
+            iterm = TagIterm.CreateInstancefromString(line.strip())
+            if iterm:
+                result.append(iterm)
+        return result
+
+    @staticmethod
+    def save(filesList):
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
+        f = open(storeFilePath, 'w')
+        for b in BookMarkAssist.bookMarks:
+            f.write("%s\n" % b.toString())
+        f.close();
         pass
+
+

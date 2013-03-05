@@ -74,6 +74,7 @@ command! AgClearWorkdir                py AgAssist.clearWorkdir()
 "book marks commands
 command! AddBookmark                   py BookMarkAssist.addCurrentCursorToBookmark()
 command! SearchBookMark                call SearchBookMark()
+command! EditBookMark                  py BookMarkAssist.edit()
 "command! EditBookmark                  py BookMarkAssist.edit()
 
 "Recent files

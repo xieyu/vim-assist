@@ -44,6 +44,7 @@ Bookmark is very useful when you have lot of code and tracing a bug.
 This assist provide commands:
 * AddBookmark     this command will add the file and lineNum which the current cursor locate to bookmark.
 * SearchBookMark  this command will open the search window, then you can search the bookmark
+* EditBookMark,   Edit bookmark as normal file
 
 a bookmark is in follow format:
 ```
@@ -64,9 +65,6 @@ There are a keymap `<leader>b` for SearchBookMark:
 ``
 nmap <leader>b :SearchBookMark<CR>
 ``
-###TODO###
-* EditBookMark, not provide this command yet. finish it later..
-
 
 ##Gtags##
 [gtags](http://www.gnu.org/software/global/) is very useful tool for search cpp, java, code.

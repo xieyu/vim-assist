@@ -6,53 +6,71 @@ from Common import SettingManager
 
 class HistoryAssist:
     recentFiles = None
-    dbKey = "HistoryAssist"
+    storeFileName= "HistoryFiles"
     @staticmethod
     def getHistoryIterms():
         result = []
-        recentFiles = SettingManager.get(HistoryAssist.dbKey)
-        if recentFiles is []:
+        if HistoryAssist.recentFiles is None:
+            HistoryAssist.recentFiles = HistoryAssist.load()
+        if HistoryAssist.recentFiles is []:
             print "recent history is none"
 
-        for filePath in recentFiles:
+        for filePath in HistoryAssist.recentFiles:
             if filePath:
                 fileName = os.path.basename(filePath)
                 result.append(FileIterm(fileName, filePath))
+        result.reverse()
         return result
 
     @staticmethod
     def add():
         filePath = vim.current.buffer.name
-        rfiles = SettingManager.get(HistoryAssist.dbKey)
-        if filePath in rfiles or not os.path.exists(filePath):
+        if not os.path.exists(filePath):
             return
-        rfiles.append(filePath)
-        SettingManager.save(HistoryAssist.dbKey, rfiles)
+        if HistoryAssist.recentFiles is None:
+            HistoryAssist.recentFiles = HistoryAssist.load()
+        for i, rfile in enumerate(HistoryAssist.recentFiles):
+            if rfile == filePath:
+                del HistoryAssist.recentFiles[i]
+                break
+
+        if filePath in HistoryAssist.recentFiles:
+            return
+
+        HistoryAssist.recentFiles.append(filePath)
+        HistoryAssist.save(HistoryAssist.recentFiles)
 
     @staticmethod
     def clear():
-        SettingManager.save(HistoryAssist.dbKey, [])
+        HistoryAssist.save([])
 
     @staticmethod
     def edit():
-        HistoryAssist.tmpfile = SettingManager.tmpfile("history")
-        HistoryAssist.dump(HistoryAssist.tmpfile)
-        vim.command("sp %s"% HistoryAssist.tmpfile)
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), HistoryAssist.storeFileName)
+        vim.command("sp %s"% storeFilePath)
         vim.command("autocmd BufWritePost <buffer> py HistoryAssist.reload()")
 
     @staticmethod
     def reload():
-        f = open(HistoryAssist.tmpfile, 'r')
-        result = []
-        for line in f.readlines():
-            result.append(line.strip())
-        SettingManager.save(HistoryAssist.dbKey, result)
+        HistoryAssist.recentFiles = HistoryAssist.load()
 
     @staticmethod
-    def dump(filePath):
-        f = open(filePath, 'w')
-        rfiles = SettingManager.get(HistoryAssist.dbKey)
-        for filePath in rfiles:
+    def load():
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), HistoryAssist.storeFileName)
+        result = []
+        try:
+            f = open(storeFilePath, 'r')
+            for line in f.readlines():
+                result.append(line.strip())
+        except:
+            pass
+        return result
+
+    @staticmethod
+    def save(filesList):
+        storeFilePath = os.path.join(SettingManager.getStoreDir(), HistoryAssist.storeFileName)
+        f = open(storeFilePath, 'w')
+        for filePath in filesList:
             f.write("%s\n" % filePath)
         f.close();
         pass

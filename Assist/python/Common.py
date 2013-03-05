@@ -33,24 +33,10 @@ class CommonUtil:
 
 class SettingManager:
     walle_home = vim.eval("g:assistHome")
-    configFile= os.path.join(walle_home, "config/shelvedb")
     @staticmethod
-    def save(key, value):
-        d = shelve.open(SettingManager.configFile)
-        d[key] = value
-        d.close()
+    def getStoreDir():
+        return os.path.join(SettingManager.walle_home, "config/")
 
-    @staticmethod
-    def get(key):
-        d = shelve.open(SettingManager.configFile)
-        value = d.has_key(key) and  d[key] or []
-        d.close()
-        return value
-
-    @staticmethod
-    def tmpfile(key):
-        filePath = os.path.join(SettingManager.walle_home, "config/tmp_%s" % key)
-        return filePath
 
 def initVimAssist():
     assistHome = vim.eval("g:assistHome")

@@ -1,5 +1,6 @@
 import os
 import vim
+import re
 #intereface for searchIterm
 class SearchIterm(object):
     def displayText(self):
@@ -39,7 +40,7 @@ class FileIterm(SearchIterm):
             vim.command("%s wincmd w"%curwin)
         return True
     def equal(self, iterm):
-        return self.name is iterm.name and self.path is iterm.path
+        return self.name == iterm.name and self.path == iterm.path
 
 
 class TagIterm(FileIterm):
@@ -74,8 +75,24 @@ class TagIterm(FileIterm):
 
     def equal(self, iterm):
         if super(TagIterm, self).equal(iterm):
-            return self.lineNumber is iterm.lineNumer and self.codeSnip is iterm.codeSnip
+            return self.lineNumber == iterm.lineNumber and self.codeSnip == iterm.codeSnip
         return False
+    @staticmethod
+    def CreateInstancefromString(s):
+        ret = None
+        try:
+            pattern = re.compile("(\S*)\s*(\S*)\s*(.*$)")
+            line = s.strip()
+            if line:
+                (filePath, lineNumber, codeSnip) = pattern.search(line).groups()
+                ret  = TagIterm(name = os.path.basename(filePath), path = filePath, lineNumber = lineNumber, codeSnip = codeSnip)
+        except:
+            pass
+        return ret
+
+
+    def toString(self):
+        return "%s %s %s" %(self.path, self.lineNumber, self.codeSnip)
 
 class CtagIterm(TagIterm):
     def __init__(self, name, path, lineNumber, codeSnip, symbolType):
