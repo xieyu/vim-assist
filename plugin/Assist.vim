@@ -23,19 +23,30 @@ call RunPyFile("AgAssist.py")
 call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
 
-function! SearchHistory()
-	python vimAssistSearchWindow = SearchWindow(FileSearchBackend(HistoryAssist.getHistoryIterms()))
+function! GetCusorWordIfEmpty(pattern)
+	let l:word=a:pattern
+	if l:word == ""
+		let l:word = expand("<cword>")
+	endif
+	return l:word
+endfunction
+
+
+function! SearchHistory(pattern)
+	python vimAssistSearchWindow = SearchWindow(FileSearchBackend(HistoryAssist.getHistoryIterms(vim.eval("a:pattern"))))
 	python vimAssistSearchWindow.show("vimAssistSearchWindow")
 endfunction
 
 function! GtagsSymbolDefine(pattern)
-	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("a:pattern"))))
+	let l:word = GetCusorWordIfEmpty(a:pattern)
+	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("l:word")))
 	python displayWindow.show("displayWindow")
 endfunction
 
 
 function! GtagsSymbolRef(pattern)
-	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("a:pattern"))))
+	let l:word= GetCusorWordIfEmpty(a:pattern)
+	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolRef(vim.eval("l:word"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
@@ -50,7 +61,7 @@ function! SearchBookMark()
 endfunction
 
 function! AgSearch(pattern)
-	python displayWindow = SearchWindow(TagSearchBackend(AgAssist.search(vim.eval("a:pattern"))))
+	python displayWindow = SearchWindow(TagSearchBackend(AgAssist.search(vim.eval(GetCusorWordIfEmpty(a:pattern)))))
 	python displayWindow.show("displayWindow")
 endfunction
 
@@ -68,13 +79,13 @@ endfunction
 
 "Commands:"
 "Gtags command
-command! -nargs=1 GtagsSymbolDefine     call GtagsSymbolDefine(<q-args>)
-command! -nargs=1 GtagsSymbolRef        call GtagsSymbolRef(<q-args>)
-command! -nargs=1 GtagsFile             call GtagsFile(<q-args>)
-command! -nargs=1 GtagsWorkDir          py   GtagsAssist.setWorkdir(<q-args>)
+command! -nargs=? Gs                 call GtagsSymbolDefine(<q-args>)
+command! -nargs=? Gr                 call GtagsSymbolRef(<q-args>)
+command! -nargs=? Gf                 call GtagsFile(<q-args>)
+command! -nargs=1 Gtagdir               py   GtagsAssist.setWorkdir(<q-args>)
 
 "The sliver searcher
-command! -nargs=1 Ag                   call AgSearch(<q-args>)
+command! -nargs=? Ag                   call AgSearch(<q-args>)
 command! -nargs=1 -complete=dir Agdir                py AgAssist.setWorkdir(<q-args>)
 command! AgClearWorkdir                py AgAssist.clearWorkdir()
 
@@ -91,7 +102,7 @@ command! EditBookMark                  py BookMarkAssist.edit()
 "command! EditBookmark                  py BookMarkAssist.edit()
 
 "Recent files
-command! SearchHistory                 call SearchHistory()
+command! -nargs=? SeachHistory                            call SearchHistory(<q-args>)
 command! EditHistory                   py HistoryAssist.edit()
 au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
@@ -102,24 +113,4 @@ command! Gklog                      py GitAssist.gitkLogCurrentBuffer()
 command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "Ctags
-command! CtagsSearchCurrentFile     call CtagsSearchCurrentFile()
-
-
-"Maps:
-nmap <leader>r :SearchHistory<CR>
-nmap <leader>b :SearchBookMark<CR>
-nmap <leader>c :CtagsSearchCurrentFile<CR>
-nmap <leader>ab :AddBookmark<CR>
-
-"use ag search
-nmap <leader>ag :Ag  <C-R>=expand("<cword>")<CR><CR>
-
-nmap <leader>gs :GtagsSymbolRef <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gd :GtagsSymbolDefine <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gf :GtagsFile 
-
-"nmap <leader>ga :ChangeBetweenHeaderAndCFile<CR>
-
-nmap<leader>gp :Gklog<CR>
-nmap<leader>gl :Gkblame<CR>
-
+command! CtagsCurrentFile     call CtagsSearchCurrentFile()
