@@ -10,8 +10,9 @@ Require python and vim compled with python feature.
 ###Install###
 recommand to use pathogen of vundle to install it
 
-#Common intereface#
-There are same keymap for all the search window opened by these assist:
+##Common intereface##
+all tools in vim-assit  such as FileNavigation or historyFile search, will open a window to show the search result, In this window you can use following keymaps
+
 * `<esc>`   close the search window
 * `<enter>` open file under cursor and close the search window
 * `<c-o>``  open file under cursor without close the search window, and jump to the window that open the file
@@ -19,7 +20,31 @@ There are same keymap for all the search window opened by these assist:
 * `<c-j>`   select next one
 * `<c-k>`   select pre one
 
-##historyfile##
+##FileNavigation##
+File navigation is used to quick search the files with stroke type, it's like command-T, or ctrl-p plugin, there are tow commands
+``Fg`` and ``Fgdir``.
+
+###Fgdir##
+command Fgdir will set the the FileNavigation search dir, the default is vim's current work dir. for example:
+```
+:Fgdir ~/codes/demos/
+```
+by using it FileNavigation will search all the file under ``~/codes/demos``, instead of vim's current work dir
+
+###Fg###
+command Fg is used to search file with pattern, it accept zero or one args
+
+for zero arg, it will list all the files under the searchPath in the searchWindow, then you can type some
+stroke to do more filter the result.
+
+if has args, it will list the file match the args instead of all the files under the searchPath
+
+use example:
+```
+:Fg dom
+```
+
+##historyfile search##
 Everyfile you edit, will be record. And then you can search it with key stroke, normally it just compare fileName with your input, but 
 if there '/' in you input, it will compre the full path.
 
@@ -51,7 +76,7 @@ a bookmark is in follow format:
 filePath  lineNum  codeSnip
 ```
 
-for exmaple:
+the bookmark exmaple:
 ```
 ~/codes/demos/foo.c  100  int main(int argc ,char* argv)
 ```
@@ -132,9 +157,9 @@ $sudo apt-get install the-silver-searcher
 For other platform follow instraction at [here](https://github.com/ggreer/the_silver_searcher)
 
 ###Commands###
-* ``:Ag [options] {pattern} [{directory}]``, see ``ag help `` for detail
-* ``:AgWorkdir path/to/dir`` set ag work dir, default cwd
-* ``:AgClearWokdir``         set ag workdidr as cwd
+* ``:Ag [options] {pattern} [{directory}]``  see ``ag help `` for detail
+* ``:Agdir path/to/dir``                     set ag work dir, default cwd
+* ``:AgClearWokdir``                         set ag workdidr as cwd
 
 ###keymaps###
 this keymap will search the word under cursor in AgWorkdir if you have set it or cwd
@@ -159,7 +184,7 @@ nmap<leader>gl :Gkblame<CR>
 
 
 ##TEST##
-I use it dailly  on linux platform.  have problem on Mac os now and will fix it later. not test it windows yet.
+I use it dailly on linux platform and Mac os. not test it windows yet.
 
 
 ##TODO##
