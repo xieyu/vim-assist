@@ -21,6 +21,7 @@ call RunPyFile("BookMarkAssist.py")
 call RunPyFile("GtagsAssist.py")
 call RunPyFile("AgAssist.py")
 call RunPyFile("CtagsAssist.py")
+call RunPyFile("FileNvAssist.py")
 
 function! SearchHistory()
 	python vimAssistSearchWindow = SearchWindow(FileSearchBackend(HistoryAssist.getHistoryIterms()))
@@ -58,6 +59,13 @@ function! CtagsSearchCurrentFile()
 	python displayWindow.show("displayWindow")
 endfunction
 
+function! FileNvSearch(pattern)
+	python displayWindow= SearchWindow(FileSearchBackend(FileNvAssist.getFileIterms(vim.eval("a:pattern"))))
+	python displayWindow.show("displayWindow")
+endfunction
+
+
+
 "Commands:"
 "Gtags command
 command! -nargs=1 GtagsSymbolDefine     call GtagsSymbolDefine(<q-args>)
@@ -67,8 +75,12 @@ command! -nargs=1 GtagsWorkDir          py   GtagsAssist.setWorkdir(<q-args>)
 
 "The sliver searcher
 command! -nargs=1 Ag                   call AgSearch(<q-args>)
-command! -nargs=1 AgWorkdir         py AgAssist.setWorkdir(<q-args>)
+command! -nargs=1 -complete=dir Agdir                py AgAssist.setWorkdir(<q-args>)
 command! AgClearWorkdir                py AgAssist.clearWorkdir()
+
+"File path search
+command! -nargs=? Fg                   call FileNvSearch(<q-args>)
+command! -nargs=1 -complete=dir Fgdir  py FileNvAssist.setWorkdir(<q-args>)
 
 
 "book marks commands
@@ -94,7 +106,6 @@ command! CtagsSearchCurrentFile     call CtagsSearchCurrentFile()
 
 "Maps:
 nmap <leader>r :SearchHistory<CR>
-nmap <leader>l :SearchGtagsHistory<CR>
 nmap <leader>b :SearchBookMark<CR>
 nmap <leader>c :CtagsSearchCurrentFile<CR>
 nmap <leader>ab :AddBookmark<CR>
