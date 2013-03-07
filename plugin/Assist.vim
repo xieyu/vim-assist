@@ -61,7 +61,8 @@ function! SearchBookMark()
 endfunction
 
 function! AgSearch(pattern)
-	python displayWindow = SearchWindow(TagSearchBackend(AgAssist.search(vim.eval(GetCusorWordIfEmpty(a:pattern)))))
+	let l:word= GetCusorWordIfEmpty(a:pattern)
+	python displayWindow = SearchWindow(TagSearchBackend(AgAssist.search(vim.eval("l:word"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
