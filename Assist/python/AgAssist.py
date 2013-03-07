@@ -1,7 +1,6 @@
 import subprocess
 import re
 import os
-import shelve
 
 from SearchIterm import TagIterm
 from Common import CommonUtil
@@ -28,6 +27,7 @@ class AgAssist:
             AgAssist.workdir = workdir
         else:
             print "%s is note exists"
+        print "change dir to %s" % AgAssist.workdir
 
     @staticmethod
     def clearWorkdir():
