@@ -12,6 +12,9 @@ class SearchIterm(object):
     def equal(self, iterm):
         return True
 
+    def getRankKey(self, iterm):
+        return ""
+
 class FileIterm(SearchIterm):
     def __init__(self, name, path):
         self.name = name
@@ -39,8 +42,12 @@ class FileIterm(SearchIterm):
         if action == "close":
             vim.command("%s wincmd w"%curwin)
         return True
+
     def equal(self, iterm):
         return self.name == iterm.name and self.path == iterm.path
+
+    def getRankKey(self):
+        return self.name
 
 
 class TagIterm(FileIterm):

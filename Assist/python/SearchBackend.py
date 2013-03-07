@@ -37,10 +37,17 @@ class ItermsFilter(SearchBackend):
         return self.iterms
 
     def search(self, word):
-        return [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
+        result = [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
+        if len(result) < 1000:
+            result = sorted(result, cmp=self.itermRank)
+        return result
 
     def itermPassCheck(self, world, iterm):
         return True
+
+    def itermRank(self, iterm1, iterm2):
+        return len(iterm1.getRankKey()) - len(iterm2.getRankKey())
+
 
 class FileSearchBackend(ItermsFilter):
     def itermPassCheck(self, word, iterm):
