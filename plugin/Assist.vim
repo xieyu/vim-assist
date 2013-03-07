@@ -39,7 +39,7 @@ endfunction
 
 function! GtagsSymbolDefine(pattern)
 	let l:word = GetCusorWordIfEmpty(a:pattern)
-	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("l:word")))
+	python displayWindow = SearchWindow(TagSearchBackend(GtagsAssist.searchSymbolDefine(vim.eval("l:word"))))
 	python displayWindow.show("displayWindow")
 endfunction
 
