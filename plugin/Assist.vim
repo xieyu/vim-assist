@@ -79,8 +79,9 @@ command! -nargs=1 -complete=dir Agdir                py AgAssist.setWorkdir(<q-a
 command! AgClearWorkdir                py AgAssist.clearWorkdir()
 
 "File path search
-command! -nargs=? Fg                   call FileNvSearch(<q-args>)
-command! -nargs=1 -complete=dir Fgdir  py FileNvAssist.setWorkdir(<q-args>)
+command! -nargs=? Fn                   call FileNvSearch(<q-args>)
+command! -nargs=1 -complete=dir Fndir  py FileNvAssist.setWorkdir(<q-args>)
+command!  Fncleardir                   py FileNvAssist.clearWorkdir()
 
 
 "book marks commands
