@@ -8,7 +8,7 @@ class HistoryAssist:
     recentFiles = None
     storeFileName= "HistoryFiles"
     @staticmethod
-    def getHistoryIterms():
+    def getHistoryIterms(symbol):
         result = []
         if HistoryAssist.recentFiles is None:
             HistoryAssist.recentFiles = HistoryAssist.load()
@@ -18,7 +18,8 @@ class HistoryAssist:
         for filePath in HistoryAssist.recentFiles:
             if filePath:
                 fileName = os.path.basename(filePath)
-                result.append(FileIterm(fileName, filePath))
+                if CommonUtil.fileStrokeMatch(symbol, filePath):
+                    result.append(FileIterm(fileName, filePath))
         result.reverse()
         return result
 

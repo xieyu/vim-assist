@@ -55,16 +55,6 @@ This assist provide these commands:
 * SearchHistory  this command  will open the search window, then you can input something to search the file in history list
 * EditHistory    this command  will open the a buffer, in which contains all the history file, you can edit it like normal file.
 
-There also a keymap'<leader>r':
-```
-nmap <leader>r :SearchHistory<CR>
-```
-for `<leader>` you can see the detail by `:help leader`, normally I set `,` as `<leader>`:
-by add follow in `.vimrc`
-```
-let mapleader=","
-```
-
 ##Bookmark##
 Bookmark is very useful when you have lot of code and tracing a bug.
 
@@ -74,8 +64,6 @@ This assist provide commands:
 * SearchBookMark  this command will open the search window, then you can search the bookmark
 * EditBookMark,   Edit bookmark as normal file
 
-a bookmark is in follow format:
-```
 filePath  lineNum  codeSnip
 ```
 
@@ -87,12 +75,6 @@ the bookmark exmaple:
 you can search with "foo", it will search the bookmark which fileName contains stroke 'foo', or you can 
 search with "@main", it will search bookmark with codeSnip that contains stroke 'main'. and you can combine
 use "foo@main", this will search bookmark which filename contain stroke 'foo', and codeSnip contain 'main'.
-
-###keymaps###
-There are a keymap `<leader>b` for SearchBookMark:
-``
-nmap <leader>b :SearchBookMark<CR>
-``
 
 ##Gtags##
 [gtags](http://www.gnu.org/software/global/) is very useful tool for search cpp, java, code.
@@ -108,17 +90,18 @@ $gtags
 ```
 ###commands###
 This Assist provide following commands
-* GtagsSymbolRef    this command will search the place that reference the symbol.
-* GtagsSymbolDefine this command will search the place where the symbol is defined.
-* GtagsFile         this command will search file which in the pattern you just input.
-* GtagsWorkdir      this command will set work dir for gtags
+* Gr                 this command will search the place that reference the symbol.
+* Gs                 this command will search the place where the symbol is defined.
+* Gf                 this command will search file which in the pattern you just input.
+* Gtagdir            this command will set work dir for gtags
 
-These commands require args. 
+args can be zero or one, if zero it will search the word under current cursor
+
 ####usage####
-* ``:GtagsSymbolRef symbol``
-* ``:GtagsSymbolDefine symbol``
-* ``:GtagsFile  filepattern``
-* ``:GtagsWorkdir path/to/workdir/``
+* ``:Gr       symbol``
+* ``:Gs       symbol``
+* ``:Gf       filepattern``
+* ``:Gtagdir  path/to/workdir/``
 
 You can search file which contain 'canvas' by `:GtagsFile canvas`, 
 then it will open a search window which list file that contains the 'canvas',
@@ -128,26 +111,15 @@ The way of use ``GtagsSymbolDefine`` and ``GtagsSymbolRef`` command is same as `
 the search window you can search in the same way as Bookmark with format "filePath@codesnip",
 see Bookmark section for detail
 
-``:GtagsWorkdir ~/codes/demos/`` will make gtags search dir `~/codes/demos` for tags instead of cwd
+``:Gtagdir ~/codes/demos/`` will make gtags search dir `~/codes/demos` for tags instead of cwd
 
-###keymaps###
-There also keymaps, which will search the word under current cursor, Attention there a space following 'GtagsFile'
-```
-nmap <leader>gs :GtagsSymbolRef <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gd :GtagsSymbolDefine <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>gf :GtagsFile 
-```
 
 ##Ctags##
 ctags at here is used to quick jump to the define of symbol in current file.
 
 ###commands###
-* CtagsSearchCurrentFile, this will list all the sybmol in the current file in the search window
+* CtagsCurrentFile     this will list all the sybmol in the current file in the search window
 
-###keymaps##
-```
-nmap <leader>c :CtagsSearchCurrentFile<CR>
-```
 
 ##Ag##
 ag [the_silver_searcher](https://github.com/ggreer/the_silver_searcher)can be used as replacement of grep or Ack, its speed is very impressive.
@@ -164,12 +136,7 @@ For other platform follow instraction at [here](https://github.com/ggreer/the_si
 * ``:Agdir path/to/dir``                     set ag work dir, default cwd
 * ``:AgClearWokdir``                         set ag workdidr as cwd
 
-###keymaps###
-this keymap will search the word under cursor in AgWorkdir if you have set it or cwd
-```
-nmap <leader>ag :Ag  <C-R>=expand("<cword>")<CR><CR>
-```
-The search window opened by Ag assit can use the same with Bookmark, see bookmark section for details.
+if Ag use with argment, it will search the word under the cursor
 
 ##Gitk##
 gitk is used to see the log of current file, provide two command
@@ -177,13 +144,6 @@ gitk is used to see the log of current file, provide two command
 * Gkblame       this command will call gitk show the commit which change current line last time
 * Gklog         this command will call gitk show the change log of current file
 * Gitk <args>   command with args, which is samed as gitk in shell 
-
-###map###
-have to map at here
-```
-nmap<leader>gp :Gklog<CR>
-nmap<leader>gl :Gkblame<CR>
-```
 
 
 ##TEST##
