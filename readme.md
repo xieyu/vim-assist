@@ -22,7 +22,7 @@ all tools in vim-assit  such as FileNavigation or historyFile search, will open 
 
 ##FileNavigation##
 File navigation is used to quick search the files with stroke type, it's like command-T, or ctrl-p plugin, there are tow commands
-``Fg`` and ``Fgdir``.
+``Fn`` and ``Fndir``.
 
 ###Fndir###
 command Fgdir will set the the FileNavigation search dir, the default is vim's current work dir. for example:
