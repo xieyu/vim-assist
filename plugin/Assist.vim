@@ -22,7 +22,7 @@ call RunPyFile("GtagsAssist.py")
 call RunPyFile("AgAssist.py")
 call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
-call RunPyFile("OpenGLDocAssist.py")
+call RunPyFile("ManAssist.py")
 
 function! GetCusorWordIfEmpty(pattern)
 	let l:word=a:pattern
@@ -82,6 +82,11 @@ function! OpenGLMan(symbol)
 	python OpenGLDocAssist.Man(vim.eval("l:word"))
 endfunction
 
+function! GoogleSearch(symbol)
+	let l:word= GetCusorWordIfEmpty(a:symbol)
+	python GoogleSearch.Search(vim.eval("l:word"))
+endfunction
+
 
 
 "Commands:"
@@ -124,3 +129,4 @@ command! CtagsCurrentFile     call CtagsSearchCurrentFile()
 
 "Opengl document
 command! -nargs=* Openglman         call OpenGLMan(<q-args>)
+command! -nargs=* GoogleSearch      call GoogleSearch(<q-args>)
