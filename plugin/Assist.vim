@@ -22,6 +22,7 @@ call RunPyFile("GtagsAssist.py")
 call RunPyFile("AgAssist.py")
 call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
+call RunPyFile("OpenGLDocAssist.py")
 
 function! GetCusorWordIfEmpty(pattern)
 	let l:word=a:pattern
@@ -69,11 +70,16 @@ endfunction
 function! CtagsSearchCurrentFile()
 	python displayWindow = SearchWindow(CtagSearchBackend(CtagsAssist.getCurrentFileTags()))
 	python displayWindow.show("displayWindow")
-endfunction
+endf`unction
 
 function! FileNvSearch(pattern)
 	python displayWindow= SearchWindow(FileSearchBackend(FileNvAssist.getFileIterms(vim.eval("a:pattern"))))
 	python displayWindow.show("displayWindow")
+endfunction
+
+function! OpenGLMan(symbol)
+	let l:word= GetCusorWordIfEmpty(a:symbol)
+	python OpenGLDocAssist.Man(vim.eval("l:word"))
 endfunction
 
 
@@ -108,10 +114,13 @@ command! EditHistory                   py HistoryAssist.edit()
 au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
 
-"Gik
+"Gitk
 command! Gkblame                    py GitAssist.gitkCurrentLine()
 command! Gklog                      py GitAssist.gitkLogCurrentBuffer()
 command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "Ctags
 command! CtagsCurrentFile     call CtagsSearchCurrentFile()
+
+"Opengl document
+command! -nargs=* Openglman         call OpenGLMan(<q-args>)
