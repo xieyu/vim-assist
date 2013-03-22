@@ -23,6 +23,7 @@ call RunPyFile("AgAssist.py")
 call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
 call RunPyFile("ManAssist.py")
+call RunPyFile("CodeSearchAssist.py")
 
 function! GetCusorWordIfEmpty(pattern)
 	let l:word=a:pattern
@@ -67,6 +68,12 @@ function! AgSearch(pattern)
 	python displayWindow.show("displayWindow")
 endfunction
 
+function! CodeSearch(pattern)
+	let l:word= GetCusorWordIfEmpty(a:pattern)
+	python displayWindow = SearchWindow(TagSearchBackend(CodeSearchAssist.search(vim.eval("l:word"))))
+	python displayWindow.show("displayWindow")
+endfunction
+
 function! CtagsSearchCurrentFile()
 	python displayWindow = SearchWindow(CtagSearchBackend(CtagsAssist.getCurrentFileTags()))
 	python displayWindow.show("displayWindow")
@@ -87,6 +94,10 @@ function! GoogleSearch(symbol)
 	python GoogleSearch.Search(vim.eval("l:word"))
 endfunction
 
+function! StackOverFlow(symbol)
+	let l:word= GetCusorWordIfEmpty(a:symbol)
+	python StackOverFlow.Search(vim.eval("l:word"))
+endfunction
 
 
 "Commands:"
@@ -100,6 +111,10 @@ command! -nargs=1 Gtagdir               py   GtagsAssist.setWorkdir(<q-args>)
 command! -nargs=? Ag                   call AgSearch(<q-args>)
 command! -nargs=1 -complete=dir Agdir                py AgAssist.setWorkdir(<q-args>)
 command! AgClearWorkdir                py AgAssist.clearWorkdir()
+
+"The codesearch
+command! -nargs=? Cs                   call CodeSearch(<q-args>)
+command! -nargs=1 -complete=dir CsMakeIndex   py CodeSearchAssist.makeIndex(<q-args>)
 
 "File path search
 command! -nargs=? Fn                   call FileNvSearch(<q-args>)
@@ -130,3 +145,5 @@ command! CtagsCurrentFile     call CtagsSearchCurrentFile()
 "Opengl document
 command! -nargs=* Openglman         call OpenGLMan(<q-args>)
 command! -nargs=* GoogleSearch      call GoogleSearch(<q-args>)
+command! -nargs=1 Bts               py OperaBts.browserBug(<q-args>)
+command! -nargs=* StackOverFlow     call StackOverFlow(<q-args>)
