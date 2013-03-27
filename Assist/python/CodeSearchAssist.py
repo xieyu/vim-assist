@@ -6,11 +6,15 @@ from SearchIterm import TagIterm
 from Common import CommonUtil
 
 class CodeSearchAssist:
+    searchDir = None
     #public interface:
     @staticmethod
     def search(symbol):
         symbol = symbol.strip()
-        cmd_arg = "-n %s" % symbol
+        prefix = "-n"
+        if CodeSearchAssist.searchDir:
+            prefix = "-n -f %s" %(CodeSearchAssist.searchDir)
+        cmd_arg = "%s %s" % (prefix, symbol)
         output = CodeSearchAssist.cmd(cmd_arg)
         return CodeSearchAssist.createTagCandidate(output)
 
@@ -18,7 +22,7 @@ class CodeSearchAssist:
     @staticmethod
     def createTagCandidate(output):
         result = []
-        pattern = re.compile("(\S*):(\d*):(.*$)")
+        pattern = re.compile("([^ \t:]*):(\d*):(.*$)")
         for line in output.split("\n"):
             line = line.strip()
             if line:
@@ -26,6 +30,11 @@ class CodeSearchAssist:
                 iterm = TagIterm(name = "", path = AgAssist.getFilePath(filePath), lineNumber = row, codeSnip = codeSnip.strip())
                 result.append(iterm)
         return result
+
+    @staticmethod
+    def setSearchDir(dir):
+        path = os.path.abspath(dir)
+        CodeSearchAssist.searchDir = path
 
     @staticmethod
     def cmd(cmd_args):

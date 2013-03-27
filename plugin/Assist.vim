@@ -24,6 +24,7 @@ call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
 call RunPyFile("ManAssist.py")
 call RunPyFile("CodeSearchAssist.py")
+call RunPyFile("Shell.py")
 
 function! GetCusorWordIfEmpty(pattern)
 	let l:word=a:pattern
@@ -114,6 +115,7 @@ command! AgClearWorkdir                py AgAssist.clearWorkdir()
 
 "The codesearch
 command! -nargs=? Cs                   call CodeSearch(<q-args>)
+command! -nargs=1 -complete=dir Csdir    py CodeSearchAssist.setSearchDir(<q-args>)
 command! -nargs=1 -complete=dir CsMakeIndex   py CodeSearchAssist.makeIndex(<q-args>)
 
 "File path search
@@ -129,7 +131,7 @@ command! EditBookMark                  py BookMarkAssist.edit()
 "command! EditBookmark                  py BookMarkAssist.edit()
 
 "Recent files
-command! -nargs=? SeachHistory                            call SearchHistory(<q-args>)
+command! -nargs=? SeachHistory         call SearchHistory(<q-args>)
 command! EditHistory                   py HistoryAssist.edit()
 au BufRead,BufNewFile * 			   py HistoryAssist.add()
 
@@ -147,3 +149,6 @@ command! -nargs=* Openglman         call OpenGLMan(<q-args>)
 command! -nargs=* GoogleSearch      call GoogleSearch(<q-args>)
 command! -nargs=1 Bts               py OperaBts.browserBug(<q-args>)
 command! -nargs=* StackOverFlow     call StackOverFlow(<q-args>)
+
+"Shell
+command! -nargs=1 Run               py Shell.run(<q-args>)

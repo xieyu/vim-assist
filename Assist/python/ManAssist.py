@@ -28,5 +28,3 @@ class StackOverFlow:
         browser = SettingManager.getBrowser()
         url = "http://stackoverflow.com/search?q=%s" % symbol
         subprocess.Popen("%s %s" % (browser, url), shell=True)
-
-        
