@@ -142,7 +142,7 @@ class DisplayWindow(object):
         vim.command("bwipeout")
         vim.command("echo ''")
         self.restoreEnv()
-        self.restoreWinsize()
+        #self.restoreWinsize()
 
 class Prompt(object) :
     def __init__(self):

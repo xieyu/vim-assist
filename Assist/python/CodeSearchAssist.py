@@ -2,7 +2,8 @@ import subprocess
 import re
 import os
 
-from SearchIterm import TagIterm
+from SearchIterm import SearchIterm
+from SearchBackend import ItermsFilter
 from Common import CommonUtil
 
 class CodeSearchAssist:
@@ -13,12 +14,14 @@ class CodeSearchAssist:
     @staticmethod
     def search(symbol):
         symbol = symbol.strip()
-        prefix = "-n"
-        if CodeSearchAssist.searchDir:
-            prefix = "-n -f %s" %(CodeSearchAssist.searchDir)
-        cmd_arg = "%s %s" % (prefix, symbol)
-        output = CodeSearchAssist.cmd(cmd_arg)
-        return CodeSearchAssist.createTagCandidate(output)
+        if symbol:
+            CodeSearchAssist.addToSearchHistory(CodeSearchHistoryIterm(CodeSearchAssist.searchDir, symbol))
+            prefix = "-n"
+            if CodeSearchAssist.searchDir:
+                prefix = "-n -f %s" %(CodeSearchAssist.searchDir)
+            cmd_arg = "%s %s" % (prefix, symbol)
+            output = CodeSearchAssist.cmd(cmd_arg)
+            return CodeSearchAssist.createTagCandidate(output)
 
     #private helper functions
     @staticmethod
@@ -29,14 +32,15 @@ class CodeSearchAssist:
             line = line.strip()
             if line:
                 (filePath, row, codeSnip) = pattern.search(line).groups()
-                iterm = TagIterm(name = "", path = AgAssist.getFilePath(filePath), lineNumber = row, codeSnip = codeSnip.strip())
+                iterm = TagIterm(name = "", path = AgAssist.getFilePath(filePath), lineNumber = str(int(row)+1), codeSnip = codeSnip.strip())
                 result.append(iterm)
         return result
 
     @staticmethod
     def setSearchDir(dir):
-        path = os.path.abspath(dir)
-        CodeSearchAssist.searchDir = path
+        if dir:
+            dir = os.path.abspath(dir)
+        CodeSearchAssist.searchDir = dir
 
     @staticmethod
     def cmd(cmd_args):
@@ -59,7 +63,7 @@ class CodeSearchAssist:
 
         for i, b in enumerate(CodeSearchAssist.searchHistory):
             if b.equal(iterm):
-                del CodeSearchAssist.searchHistoryi]
+                del CodeSearchAssist.searchHistory[i]
                 break
         CodeSearchAssist.searchHistory.append(iterm)
         CodeSearchAssist.save()
@@ -67,6 +71,7 @@ class CodeSearchAssist:
     @staticmethod
     def load():
         storeFilePath = os.path.join(SettingManager.getStoreDir(), CodeSearchAssist.storeFileName)
+        result = []
         try:
             f = open(storeFilePath, 'r')
             for line in f.readlines():
@@ -88,7 +93,9 @@ class CodeSearchAssist:
 
     @staticmethod
     def getSearchHistory():
-        pass
+        if CodeSearchAssist.searchHistory is None:
+            CodeSearchAssist.searchHistory = CodeSearchAssist.load()
+        return CodeSearchAssist.searchHistory
 
 class CodeSearchHistoryIterm(SearchIterm):
     def __init__(self, searchDir, symbolName):
@@ -102,7 +109,11 @@ class CodeSearchHistoryIterm(SearchIterm):
             return "%-30s" % (self.symbolName)
 
     def onAction(self, action):
-        return True
+        old_dir = CodeSearchAssist.searchDir
+        if self.searchDir:
+            CodeSearchAssist.setSearchDir(self.searchDir)
+        vim.eval("CodeSearch('%s')" % self.symbolName)
+        CodeSearchAssist.setSearchDir(old_dir)
 
     def getRankKey(self):
         return symbolName
@@ -116,10 +127,17 @@ class CodeSearchHistoryIterm(SearchIterm):
             if line:
                 (symbolName, searchDir) = pattern.search(line).groups()
                 ret = CodeSearchHistoryIterm(searchDir, symbolName)
+        except:
+            pass
+        return ret
 
     def toString(self):
-        return self.displayText
+        return self.displayText()
 
     def equal(self, iterm):
-        pass
+        return self.searchDir == iterm.searchDir and self.symbolName == iterm.symbolName
+
+class CodeSearchHistoryBackend(ItermsFilter):
+    def itermPassCheck(self, word, iterm):
+        return word in iterm.symbolName
 

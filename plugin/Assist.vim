@@ -75,6 +75,11 @@ function! CodeSearch(pattern)
 	python displayWindow.show("displayWindow")
 endfunction
 
+function! CodeSearchHistory()
+	python displayWindow = SearchWindow(CodeSearchHistoryBackend(CodeSearchAssist.getSearchHistory()))
+	python displayWindow.show("displayWindow")
+endfunction
+
 function! CtagsSearchCurrentFile()
 	python displayWindow = SearchWindow(CtagSearchBackend(CtagsAssist.getCurrentFileTags()))
 	python displayWindow.show("displayWindow")
@@ -115,6 +120,7 @@ command! AgClearWorkdir                py AgAssist.clearWorkdir()
 
 "The codesearch
 command! -nargs=? Cs                   call CodeSearch(<q-args>)
+command!          Csh                  call CodeSearchHistory()
 command! -nargs=1 -complete=dir Csdir    py CodeSearchAssist.setSearchDir(<q-args>)
 command! -nargs=1 -complete=dir CsMakeIndex   py CodeSearchAssist.makeIndex(<q-args>)
 
