@@ -24,7 +24,6 @@ call RunPyFile("CtagsAssist.py")
 call RunPyFile("FileNvAssist.py")
 call RunPyFile("ManAssist.py")
 call RunPyFile("CodeSearchAssist.py")
-call RunPyFile("Shell.py")
 
 function! GetCusorWordIfEmpty(pattern)
 	let l:word=a:pattern
@@ -142,7 +141,7 @@ command! Gklog                      py GitAssist.gitkLogCurrentBuffer()
 command! -nargs=* Gitk              py GitAssist.gitkCmd(<q-args>)
 
 "Ctags
-command! CtagsCurrentFile     call CtagsSearchCurrentFile()
+command! CtagsCurrentFile           call CtagsSearchCurrentFile()
 
 "Opengl document
 command! -nargs=* Openglman         call OpenGLMan(<q-args>)

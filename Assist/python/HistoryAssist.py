@@ -70,7 +70,7 @@ class HistoryAssist:
     @staticmethod
     def save(filesList):
         storeFilePath = os.path.join(SettingManager.getStoreDir(), HistoryAssist.storeFileName)
-        f = open(storeFilePath, 'w')
+        f = open(storeFilePath, 'w+')
         for filePath in filesList:
             f.write("%s\n" % filePath)
         f.close();

@@ -35,7 +35,10 @@ class SettingManager:
     walle_home = vim.eval("g:assistHome")
     @staticmethod
     def getStoreDir():
-        return os.path.join(SettingManager.walle_home, "config/")
+        path = os.path.join(SettingManager.walle_home, "config/")
+        if not os.path.exists(path):
+            os.mkdir(path)
+        return path
 
     @staticmethod
     def getBrowser():

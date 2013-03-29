@@ -65,7 +65,7 @@ class BookMarkAssist:
     @staticmethod
     def save(filesList):
         storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
-        f = open(storeFilePath, 'w')
+        f = open(storeFilePath, 'w+')
         for b in BookMarkAssist.bookMarks:
             f.write("%s\n" % b.toString())
         f.close();
