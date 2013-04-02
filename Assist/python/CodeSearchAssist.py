@@ -27,7 +27,7 @@ class CodeSearchAssist:
             line = line.strip()
             if line:
                 (filePath, row, codeSnip) = pattern.search(line).groups()
-                iterm = TagIterm(name = "", path = AgAssist.getFilePath(filePath), lineNumber = row, codeSnip = codeSnip.strip())
+                iterm = TagIterm(name = "", path = AgAssist.getFilePath(filePath), lineNumber = str(int(row) + 1), codeSnip = codeSnip.strip())
                 result.append(iterm)
         return result
 
