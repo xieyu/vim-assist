@@ -18,7 +18,7 @@ class HistoryAssist:
         for filePath in HistoryAssist.recentFiles:
             if filePath:
                 fileName = os.path.basename(filePath)
-                if CommonUtil.fileStrokeMatch(symbol, filePath):
+                if CommonUtil.fileMatch(symbol, filePath):
                     result.append(FileIterm(fileName, filePath))
         result.reverse()
         return result

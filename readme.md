@@ -21,7 +21,7 @@ all tools in vim-assit  such as FileNavigation or historyFile search, will open 
 * `<c-k>`   select pre one
 
 ##FileNavigation##
-File navigation is used to quick search the files with stroke type, it's like command-T, or ctrl-p plugin, there are tow commands
+File navigation is used to quick search the files with filename pattern it's like command-T, or ctrl-p plugin, there are tow commands
 ``Fn`` and ``Fndir``.
 
 ###Fndir###
@@ -138,12 +138,19 @@ For other platform follow instraction at [here](https://github.com/ggreer/the_si
 
 if Ag use with argment, it will search the word under the cursor
 
+##CodeSearch##
+code search is plugin for great codesearch tool see http://code.google.com/p/codesearch/
+
+* Cs            search code,
+* Csdir         set the search dir
+
 ##Gitk##
 gitk is used to see the log of current file, provide two command
 ###command###
 * Gkblame       this command will call gitk show the commit which change current line last time
 * Gklog         this command will call gitk show the change log of current file
 * Gitk <args>   command with args, which is samed as gitk in shell 
+
 
 
 ##TEST##

@@ -1,4 +1,3 @@
-
 class SearchBackend:
     def search(self, word):
         return []
@@ -38,8 +37,6 @@ class ItermsFilter(SearchBackend):
 
     def search(self, word):
         result = [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
-        if len(result) < 1000:
-            result = sorted(result, cmp=self.itermRank)
         return result
 
     def itermPassCheck(self, world, iterm):
@@ -51,19 +48,19 @@ class ItermsFilter(SearchBackend):
 
 class FileSearchBackend(ItermsFilter):
     def itermPassCheck(self, word, iterm):
-        return CommonUtil.fileStrokeMatch(word, iterm.path)
+        return CommonUtil.fileMatch(word, iterm.path)
 
 class TagSearchBackend(ItermsFilter):
     def itermPassCheck(self, word, iterm):
         symbols = word.split("@")
         if len(symbols) == 1:
-            return CommonUtil.fileStrokeMatch(symbols[0], iterm.path)
+            return CommonUtil.fileMatch(symbols[0], iterm.path)
         elif len(symbols) == 2:
             passFlag = True
             if symbols[0] is not "":
-                passFlag = CommonUtil.fileStrokeMatch(symbols[0], iterm.path)
+                passFlag = CommonUtil.fileMatch(symbols[0], iterm.path)
             if passFlag and symbols[1] is not "":
-                passFlag = CommonUtil.strokeMatch(symbols[1], iterm.codeSnip)
+                passFlag = CommonUtil.wordMatch(symbols[1], iterm.codeSnip)
             return passFlag
         return True
 

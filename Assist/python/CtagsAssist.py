@@ -40,10 +40,5 @@ class CtagsAssist:
 
 class CtagSearchBackend(ItermsFilter):
     def itermPassCheck(self, word, iterm):
-        if word is "":
-            return True
-        if word[0] == '%':
-            return CommonUtil.strokeMatch(word[1:], iterm.name)
-        s = iterm.name.lower()
-        return word in s
+        return CommonUtil.wordMatch(word, iterm.name)
 

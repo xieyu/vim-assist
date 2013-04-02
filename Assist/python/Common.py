@@ -3,33 +3,36 @@ import shelve
 import vim
 import os
 import sys
+import fnmatch
 
 class CommonUtil:
     @staticmethod
-    def strokeMatch(key_stroke, filePath):
-        index = 0
-        s = filePath.lower()
-        strokes = key_stroke.lower()
-        for key in strokes:
-            index = string.find(s, key, index)
-            if index == -1:
-                return False
-        return True
+    def translatePattern(key_stroke):
+        pat = key_stroke
+        try:
+            if pat[0] == "^":
+                pat = pat[1:]
+            else:
+                pat = "*" + pat
+            if pat[-1] == '$':
+                pat = pat[:len(pat) - 1]
+            else:
+                pat = pat + "*"
+        except:
+            pat = "*"
+        return pat
 
     @staticmethod
-    def fileStrokeMatch(key_stroke, filePath):
-        if '/' in key_stroke:
-            return CommonUtil.strokeMatch(key_stroke, filePath)
-        else:
-            return CommonUtil.strokeMatch(key_stroke, os.path.basename(filePath))
+    def fileMatch(keystroke, filePath):
+        fileName = os.path.basename(filePath)
+        pat = CommonUtil.translatePattern(keystroke.lower())
+        fileName = fileName.lower()
+        return fnmatch.fnmatch(fileName, pat)
 
     @staticmethod
-    def wordStrokeMatch(key_stroke, codeline):
-        words = codeline.split(" ")
-        for w in words:
-            if CommonUtil.strokeMatch(key_stroke, w):
-                return True
-        return False
+    def wordMatch(keystroke, content):
+        pat = CommonUtil.translatePattern(keystroke.lower())
+        return fnmatch.fnmatch(content.lower(), pat)
 
 class SettingManager:
     walle_home = vim.eval("g:assistHome")

@@ -105,7 +105,7 @@ endfunction
 command! -nargs=? Gs                 call GtagsSymbolDefine(<q-args>)
 command! -nargs=? Gr                 call GtagsSymbolRef(<q-args>)
 command! -nargs=? Gf                 call GtagsFile(<q-args>)
-command! -nargs=1 Gtagdir               py   GtagsAssist.setWorkdir(<q-args>)
+command! -nargs=1 Gtagdir            py   GtagsAssist.setWorkdir(<q-args>)
 
 "The sliver searcher
 command! -nargs=? Ag                   call AgSearch(<q-args>)
@@ -148,6 +148,3 @@ command! -nargs=* Openglman         call OpenGLMan(<q-args>)
 command! -nargs=* GoogleSearch      call GoogleSearch(<q-args>)
 command! -nargs=1 Bts               py OperaBts.browserBug(<q-args>)
 command! -nargs=* StackOverFlow     call StackOverFlow(<q-args>)
-
-"Shell
-command! -nargs=1 Run               py Shell.run(<q-args>)

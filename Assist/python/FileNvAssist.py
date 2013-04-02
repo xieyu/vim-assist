@@ -10,14 +10,13 @@ class FileNvAssist:
     @staticmethod
     def getFileIterms(stroke):
         stroke = stroke.strip()
-        print stroke
         pwd = FileNvAssist.workdir
         if pwd is None:
             pwd = vim.eval("getcwd()")
         result = []
         for root, dirs, files in os.walk(pwd):
             for filePath in files:
-                if CommonUtil.fileStrokeMatch(stroke, filePath):
+                if CommonUtil.fileMatch(stroke, filePath):
                     fileName = os.path.basename(filePath)
                     filePath = os.path.join(root, filePath)
                     result.append(FileIterm(fileName, filePath))
