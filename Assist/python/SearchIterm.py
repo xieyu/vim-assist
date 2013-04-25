@@ -16,12 +16,11 @@ class SearchIterm(object):
         return ""
 
 class FileIterm(SearchIterm):
-    def __init__(self, name, path):
-        self.name = name
+    def __init__(self, path):
         self.path = path
 
     def displayText(self):
-        return "%-40s\t%s"%(self.name, self.path)
+        return "%-40s\t%s"%(os.path.basename(self.path), self.path)
 
     def onAction(self, action):
         if action == "yank":
@@ -43,16 +42,16 @@ class FileIterm(SearchIterm):
             vim.command("%s wincmd w"%curwin)
         return True
 
-    def equal(self, iterm):
-        return self.name == iterm.name and self.path == iterm.path
+    def __eq__(self, iterm):
+        return self.path == iterm.path
 
-    def getRankKey(self):
-        return self.name
+    def getPath(self):
+        return self.path
 
 
 class TagIterm(FileIterm):
-    def __init__(self, name, path, lineNumber, codeSnip):
-        super(TagIterm, self).__init__(name, path)
+    def __init__(self, path, lineNumber, codeSnip):
+        super(TagIterm, self).__init__(path)
         self.lineNumber = lineNumber
         self.codeSnip = codeSnip
 
@@ -84,27 +83,20 @@ class TagIterm(FileIterm):
         if super(TagIterm, self).equal(iterm):
             return self.lineNumber == iterm.lineNumber and self.codeSnip == iterm.codeSnip
         return False
+
     @staticmethod
-    def CreateInstancefromString(s):
-        ret = None
-        try:
-            pattern = re.compile("(\S*)\s*(\S*)\s*(.*$)")
-            line = s.strip()
-            if line:
-                (filePath, lineNumber, codeSnip) = pattern.search(line).groups()
-                ret  = TagIterm(name = os.path.basename(filePath), path = filePath, lineNumber = lineNumber, codeSnip = codeSnip)
-        except:
-            pass
-        return ret
+    def createFromJson(js):
+        return TagIterm(path = str(js["path"]), lineNumber = str(js["lineNumber"]), codeSnip = str(js["codeSnip"]))
 
-
-    def toString(self):
-        return "%s %s %s" %(self.path, self.lineNumber, self.codeSnip)
+    def toJson(self):
+        return {"path": self.path, "lineNumber": self.lineNumber, "codeSnip": self.codeSnip}
 
 class CtagIterm(TagIterm):
-    def __init__(self, name, path, lineNumber, codeSnip, symbolType):
-        super(CtagIterm, self).__init__(name, path, lineNumber, codeSnip)
+    def __init__(self, symbol, path, lineNumber, codeSnip, symbolType):
+        super(CtagIterm, self).__init__(path, lineNumber, codeSnip)
         self.symbolType = symbolType
+        self.symbol = symbol
 
     def displayText(self):
-        return "%-30s\t%-20s\t%-10s\t%-50s"%(self.name, self.symbolType, self.lineNumber, self.codeSnip)
+        return "%-30s\t%-20s\t%-10s\t%-50s"%(self.symbol, self.symbolType, self.lineNumber, self.codeSnip)
+

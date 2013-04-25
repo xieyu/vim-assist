@@ -11,6 +11,9 @@ class SearchBackend:
     def getInitDisplayIterms(self):
         return []
 
+    def prepare(self):
+        pass
+
 class DisplayBackend:
     def getDisplayIterms(self):
         return []
@@ -29,14 +32,22 @@ class ItermsDisplayer(DisplayBackend):
         return self.iterms
 
 class ItermsFilter(SearchBackend):
-    def __init__(self, iterms):
+    def __init__(self, iterms, limit = 1000):
         self.iterms = iterms
+        self.limit = limit
 
     def getInitDisplayIterms(self):
         return self.iterms
 
     def search(self, word):
-        result = [iterm for iterm in self.iterms if self.itermPassCheck(word, iterm)]
+        count = 0
+        result = []
+        for iterm in self.iterms:
+            if self.itermPassCheck(word, iterm):
+                count = count + 1
+                if count > self.limit:
+                    break
+                result.append(iterm)
         return result
 
     def itermPassCheck(self, world, iterm):

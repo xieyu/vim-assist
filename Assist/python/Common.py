@@ -34,28 +34,12 @@ class CommonUtil:
         pat = CommonUtil.translatePattern(keystroke.lower())
         return fnmatch.fnmatch(content.lower(), pat)
 
-class SettingManager:
-    walle_home = vim.eval("g:assistHome")
     @staticmethod
-    def getStoreDir():
-        path = os.path.join(SettingManager.walle_home, "config/")
-        if not os.path.exists(path):
-            os.mkdir(path)
-        return path
+    def unique(fileIterms):
+        ret = []
+        for i in fileIterms:
+            if i not in ret:
+                ret.append(i)
+        return ret
 
-    @staticmethod
-    def getBrowser():
-        s = "g:browser"
-        browser = "opera"
-        #if vim.eval('exists("%s")' % s):
-        #    browser = vim.eval('%s' % s)
-        #else:
-        #    browser = "opera"
-        return browser
-
-
-def initVimAssist():
-    assistHome = vim.eval("g:assistHome")
-    sys.path.append(os.path.abspath(assistHome + "python"))
-
-initVimAssist()
+        

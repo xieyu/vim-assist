@@ -3,10 +3,10 @@ import vim
 
 from SearchIterm import TagIterm
 from Common import CommonUtil
-from Common import SettingManager
+from SettingManager import SettingManager
 
 class BookMarkAssist:
-    storeFileName = "BookMarks"
+    storeKey = "bookmarks.json"
     bookMarks = None
     @staticmethod
     def getBookMarkIterms():
@@ -21,8 +21,7 @@ class BookMarkAssist:
             row, col = vim.current.window.cursor
             lineNumber = row
             codeSnip = vim.current.buffer[row - 1]
-            fileName = os.path.basename(filePath)
-            bookmark = TagIterm(fileName, filePath, lineNumber, codeSnip)
+            bookmark = TagIterm(filePath, lineNumber, codeSnip)
             BookMarkAssist.add(bookmark)
 
 
@@ -44,31 +43,13 @@ class BookMarkAssist:
 
     @staticmethod
     def edit():
-        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
-        vim.command("sp %s"% storeFilePath)
-        vim.command("autocmd BufWritePost <buffer> py BookMarkAssist.reload()")
+        SettingManager.editSavedValue(BookMarkAssist.storeKey, "BookMarkAssist.reload()")
 
     @staticmethod
     def load():
-        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
-        result = []
-        try:
-            f = open(storeFilePath, 'r')
-            for line in f.readlines():
-                iterm = TagIterm.CreateInstancefromString(line.strip())
-                if iterm:
-                    result.append(iterm)
-        except:
-            pass
-        return result
+        bookmarks = SettingManager.load(BookMarkAssist.storeKey)
+        return [TagIterm.createFromJson(b) for b in bookmarks]
 
     @staticmethod
-    def save(filesList):
-        storeFilePath = os.path.join(SettingManager.getStoreDir(), BookMarkAssist.storeFileName)
-        f = open(storeFilePath, 'w+')
-        for b in BookMarkAssist.bookMarks:
-            f.write("%s\n" % b.toString())
-        f.close();
-        pass
-
-
+    def save(bookmarks):
+        SettingManager.save(BookMarkAssist.storeKey, [b.toJson() for b in bookmarks])

@@ -26,7 +26,7 @@ class CtagsAssist:
             line = line.strip()
             if line:
                 (symbol, symbolType, lineNumber, filePath, codeSnip) = pattern.search(line).groups()
-                iterm = CtagIterm(name = symbol, path = filePath, lineNumber = lineNumber, codeSnip = codeSnip, symbolType = symbolType)
+                iterm = CtagIterm(symbol = symbol, path = filePath, lineNumber = lineNumber, codeSnip = codeSnip, symbolType = symbolType)
                 result.append(iterm)
         return result
 
