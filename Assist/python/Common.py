@@ -1,9 +1,10 @@
 import string
-import shelve
 import vim
 import os
 import sys
 import fnmatch
+import subprocess
+import shlex
 
 class CommonUtil:
     @staticmethod
@@ -41,5 +42,3 @@ class CommonUtil:
             if i not in ret:
                 ret.append(i)
         return ret
-
-        

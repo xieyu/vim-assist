@@ -1,57 +1,6 @@
 import vim
 import re
 
-class EventDispatcher:
-    delegate = None
-    @staticmethod
-    def onKeyPressed(key):
-        if EventDispatcher.delegate:
-            EventDispatcher.delegate.onKeyPressed(key)
-
-    @staticmethod
-    def onCursorMove(key):
-        if EventDispatcher.delegate:
-            EventDispatcher.delegate.onCursorMove(key)
-
-    @staticmethod
-    def onAction(action):
-        if EventDispatcher.delegate:
-            EventDispatcher.delegate.onAction(action)
-
-    @staticmethod
-    def setDelegate(delegate):
-        if delegate is None:
-            print "DEBUG: delegate should not None"
-        EventDispatcher.delegate = delegate
-
-    @staticmethod
-    def setEnablePrintableKey(enable):
-        EventDispatcher.enablePrintableKey = enable
-
-    @staticmethod
-    def makeMaps():
-        if EventDispatcher.delegate is None:
-            print "DEBUG: you should set delegate before makemaps"
-            return 
-
-        mapcmd = "noremap <silent> <buffer>"
-        handler = "EventDispatcher"
-        vim.command("%s  <Tab>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, handler, "Tab"))
-        vim.command("%s  <BS>     :python %s.onKeyPressed('%s')<cr>" %(mapcmd, handler, "BS"))
-        vim.command("%s  <Del>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, handler, "Del"))
-        vim.command("%s  <Esc>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, handler, "ESC"))
-        vim.command("%s  <C-j>    :python %s.onCursorMove('down')<cr>" %(mapcmd, handler))
-        vim.command("%s  <C-k>    :python %s.onCursorMove('up')<cr>" %(mapcmd, handler))
-
-        if EventDispatcher.enablePrintableKey:
-            printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
-            for byte in printables :
-                vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, handler, byte))
-
-        if EventDispatcher.delegate:
-            for keyMap in EventDispatcher.delegate.getKeyActionMaps():
-                vim.command("%s %s :python %s.onAction('%s')<CR>"%(mapcmd, keyMap[0], handler, keyMap[1]))
-
 class EventDelegate(object):
     def onKeyPressed(self, key):
         pass
@@ -62,6 +11,48 @@ class EventDelegate(object):
     def getKeyActionMaps(self):
         return []
 
+class EventDispatcher:
+    @staticmethod
+    def instance():
+        if not hasattr(EventDispatcher, "_instance"):
+            EventDispatcher._instance = EventDispatcher()
+        return EventDispatcher._instance
+
+    def onKeyPressed(self, key):
+        self.delegate.onKeyPressed(key)
+
+    def onCursorMove(self, key):
+        self.delegate.onCursorMove(key)
+
+    def onAction(self, action):
+        self.delegate.onAction(action)
+
+    def setDelegate(self, delegate):
+        self.delegate = delegate
+
+    def setEnablePrintableKey(self, enable):
+        self.enablePrintableKey = enable
+
+    def makeMaps(self):
+        mapcmd = "noremap <silent> <buffer>"
+        #must have VimUi at here, otherwise py will use __main__.EventDispather instead of VimUi.EventDispather
+        #which is used in ShowWindow.
+        handler = "VimUi.EventDispatcher.instance()"
+        vim.command('''%s  <Tab>    :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "Tab"))
+        vim.command('''%s  <BS>     :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "BS"))
+        vim.command('''%s  <Del>    :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "Del"))
+        vim.command('''%s  <Esc>    :py %s.onKeyPressed('%s')<cr>'''%(mapcmd, handler, "ESC"))
+        vim.command('''%s  <C-j>    :py %s.onCursorMove('down')<cr>''' %(mapcmd, handler))
+        vim.command('''%s  <C-k>    :py %s.onCursorMove('up')<cr>''' %(mapcmd, handler))
+
+        if self.enablePrintableKey:
+            printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
+            for byte in printables :
+                vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, handler, byte))
+
+        if self.delegate:
+            for keyMap in self.delegate.getKeyActionMaps():
+                vim.command("%s %s :python %s.onAction('%s')<CR>"%(mapcmd, keyMap[0], handler, keyMap[1]))
 
 class DisplayWindow(EventDelegate):
     def __init__(self, backend):
@@ -150,8 +141,9 @@ class DisplayWindow(EventDelegate):
 
     def show(self):
         self.createShowBuffer()
-        EventDispatcher.setDelegate(self)
-        EventDispatcher.makeMaps()
+        dispatcher = EventDispatcher.instance()
+        dispatcher.setDelegate(self)
+        dispatcher.makeMaps()
         self.iterms = self.backend.getDisplayIterms()
         self.showIterms(self.iterms)
 
@@ -210,11 +202,12 @@ class SearchWindow(DisplayWindow):
 
     def show(self):
         self.createShowBuffer()
-        EventDispatcher.setDelegate(self)
-        EventDispatcher.setEnablePrintableKey(True)
-        EventDispatcher.makeMaps()
+        dispatcher = EventDispatcher.instance()
+        dispatcher.setDelegate(self)
+        dispatcher.setEnablePrintableKey(True)
+        dispatcher.makeMaps()
         self.backend.prepare()
-        self.iterms = self.backend.getInitDisplayIterms()
+        self.iterms = self.backend.getInitDisplayCandidates()
         self.showIterms(self.iterms)
 
     def showMatchedIterms(self):

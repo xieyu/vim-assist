@@ -1,8 +1,8 @@
 import subprocess
 import vim
 
-class GitAssist:
-    @staticmethod
+class Gitk:
+    @classmethod
     def gitCmd(cmd_args):
         cmd = "git %s" % cmd_args
         process = subprocess.Popen(cmd, stdout = subprocess.PIPE, shell = True)
@@ -10,17 +10,17 @@ class GitAssist:
         del process
         return output
 
-    @staticmethod
+    @classmethod
     def gitkCmd(cmd_args):
         cmd = "gitk %s" % cmd_args
         subprocess.Popen(cmd, shell=True)
         return
 
-    @staticmethod
+    @classmethod
     def gitBlame(filePath):
         return GitAssist.gitCmd("blame %s" % filePath)
 
-    @staticmethod
+    @classmethod
     def gitkCurrentLine():
         filePath = vim.current.buffer.name
         if filePath:
@@ -29,7 +29,7 @@ class GitAssist:
             commitHash = blames[lineNum -1].split()[0]
             GitAssist.gitkCmd("%s %s" %(commitHash.strip(),"-3"))
 
-    @staticmethod
+    @classmethod
     def gitkLogCurrentBuffer():
         filePath = vim.current.buffer.name
         if filePath:

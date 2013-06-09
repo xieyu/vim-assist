@@ -5,10 +5,8 @@ so I integrate some useful tools into vim, to make it more comfortable to use vi
 The world is under your finger, you can jump to anywhere freely, find what you need quicly, life is better with it, isn't it, haha.
 
 ###Require###
-Require python and vim compled with python feature.
+Require python and vim compled with python feature. and install code search
 
-###Install###
-recommand to use pathogen of vundle to install it
 
 ##Common intereface##
 all tools in vim-assit  such as FileNavigation or historyFile search, will open a window to show the search result, In this window you can use following keymaps
@@ -20,144 +18,76 @@ all tools in vim-assit  such as FileNavigation or historyFile search, will open 
 * `<c-j>`   select next one
 * `<c-k>`   select pre one
 
-##FileNavigation##
-File navigation is used to quick search the files with filename pattern it's like command-T, or ctrl-p plugin, there are tow commands
-``Fn`` and ``Fndir``.
+##Locate File##
+Locate file is used for quick file search, just like ctrlp and command-t
 
-###Fndir###
-command Fgdir will set the the FileNavigation search dir, the default is vim's current work dir. for example:
-```
-:Fndir ~/codes/demos/
-```
-by using it FileNavigation will search all the file under ``~/codes/demos``, instead of vim's current work dir
+###L###
+use command L, it will search the all the file under vim current dir.
 
-###Fnclear###
-clear the searchPath set by Fndir
+	:L part-of-filename
 
-###Fn###
-command Fg is used to search file with pattern, it accept zero or one args
+it will show an buffer, that contain the file which match the <code>part-of-filename</code>, then continue input the
+part of filename, it will continue on match the file with your input.
 
-for zero arg, it will list all the files under the searchPath in the searchWindow, then you can type some
-stroke to do more filter the result.
+###Lcd###
+set the search dir, the default one is vim current dir.
 
-if has args, it will list the file match the args instead of all the files under the searchPath
+	:Lcd ~/codes/demo
 
-use example:
-```
-:Fn dom
-```
+##Code Search##
 
-##historyfile search##
-Everyfile you edit, will be record. And then you can search it with key stroke, normally it just compare fileName with your input, but 
-if there '/' in you input, it will compre the full path.
+First you should install google code search tool, and set it to $PATH, and setup these tow program's path, maybe like this:
 
-This assist provide these commands:
-* SearchHistory  this command  will open the search window, then you can input something to search the file in history list
-* EditHistory    this command  will open the a buffer, in which contains all the history file, you can edit it like normal file.
+	let g:assist_csearch="~/Apps/codesearch-0.01/csearch"
+	let g:assist_cindex="~/Apps/codesearch-0.01/cindex"
 
-##Bookmark##
-Bookmark is very useful when you have lot of code and tracing a bug.
+###Cs###
+It will show line that match this pattern, if pattern is empty(that you just input command Cs), then word under the cursor will be used.
 
-###commands###
-This assist provide commands:
-* AddBookmark     this command will add the file and lineNum which the current cursor locate to bookmark.
-* SearchBookMark  this command will open the search window, then you can search the bookmark
-* EditBookMark,   Edit bookmark as normal file
+	:Cs pattern
 
-filePath  lineNum  codeSnip
-```
+after the result is shown in the buffer, you can continue search by input filename@content, which will compare the search result with filename and content.
 
-the bookmark exmaple:
-```
-~/codes/demos/foo.c  100  int main(int argc ,char* argv)
-```
+###Cindex###
+make index for code-dir
 
-you can search with "foo", it will search the bookmark which fileName contains stroke 'foo', or you can 
-search with "@main", it will search bookmark with codeSnip that contains stroke 'main'. and you can combine
-use "foo@main", this will search bookmark which filename contain stroke 'foo', and codeSnip contain 'main'.
+	:Cindex code-dir
 
-##Gtags##
-[gtags](http://www.gnu.org/software/global/) is very useful tool for search cpp, java, code.
+###Csdir##
+only search code under dir-path
 
-###require###
-This plugin require gtags installed. and generate gtags first. 
+	Cscd dir-path
 
-###generate gtags###
-for example generate gtags for code under ``~/codes/demos``
-```
-$cd ~/codes/demos/
-$gtags
-```
-###commands###
-This Assist provide following commands
-* Gr                 this command will search the place that reference the symbol.
-* Gs                 this command will search the place where the symbol is defined.
-* Gf                 this command will search file which in the pattern you just input.
-* Gtagdir            this command will set work dir for gtags
+##Buffer Search##
+###Bs###
+Bs means buffer search, it will show the line in current buffer which contain pattern, if pattern is empty, 
+the word under the cursor will be used.
 
-args can be zero or one, if zero it will search the word under current cursor
+	:Bs pattern
 
-####usage####
-* ``:Gr       symbol``
-* ``:Gs       symbol``
-* ``:Gf       filepattern``
-* ``:Gtagdir  path/to/workdir/``
+after the result is shown in the buffer, you can continue search by input filename@content, which will compare the search result with filename and content.
 
-You can search file which contain 'canvas' by `:GtagsFile canvas`, 
-then it will open a search window which list file that contains the 'canvas',
-after that you can input some stroke to do more search in this filelist.
+###Bsa###
+same with command Bs but search all buffer
 
-The way of use ``GtagsSymbolDefine`` and ``GtagsSymbolRef`` command is same as ``GtagsFile``, but except in
-the search window you can search in the same way as Bookmark with format "filePath@codesnip",
-see Bookmark section for detail
-
-``:Gtagdir ~/codes/demos/`` will make gtags search dir `~/codes/demos` for tags instead of cwd
-
-
-##Ctags##
-ctags at here is used to quick jump to the define of symbol in current file.
-
-###commands###
-* CtagsCurrentFile     this will list all the sybmol in the current file in the search window
-
-
-##Ag##
-ag [the_silver_searcher](https://github.com/ggreer/the_silver_searcher)can be used as replacement of grep or Ack, its speed is very impressive.
-
-###require###
-install ag
-```
-$sudo apt-get install the-silver-searcher
-```
-For other platform follow instraction at [here](https://github.com/ggreer/the_silver_searcher)
-
-###Commands###
-* ``:Ag [options] {pattern} [{directory}]``  see ``ag help `` for detail
-* ``:Agdir path/to/dir``                     set ag work dir, default cwd
-* ``:AgClearWokdir``                         set ag workdidr as cwd
-
-if Ag use with argment, it will search the word under the cursor
-
-##CodeSearch##
-code search is plugin for great codesearch tool see http://code.google.com/p/codesearch/
-
-* Cs            search code,
-* Csdir         set the search dir
+	:Bsa pattern
 
 ##Gitk##
-gitk is used to see the log of current file, provide two command
-###command###
-* Gkblame       this command will call gitk show the commit which change current line last time
-* Gklog         this command will call gitk show the change log of current file
-* Gitk <args>   command with args, which is samed as gitk in shell 
+need install gitk first
 
+	sudo apt-get install gitk
 
+###Gkblame###
+Gkblame will call gitk to show the commit which change current line.	
 
-##TEST##
-I use it dailly on linux platform and Mac os. not test it windows yet.
+	:Gkblame
 
+###Gklog###
+command <code>Gklog</code>, this will call gitk to show the log of current file.
 
-##TODO##
-* Better RANK
-* Search File quick
-* Integrate Ctags
+	:Gklog
+
+###Gitk###
+same useage as command gitk
+
+	:Gitk args
