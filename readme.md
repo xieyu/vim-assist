@@ -2,14 +2,12 @@
 As a programmer, there always annoy things to do, such as find file to edit or search the sybmol where it is referenced and where is it defined. 
 so I integrate some useful tools into vim, to make it more comfortable to use vim.
 
-The world is under your finger, you can jump to anywhere freely, find what you need quicly, life is better with it, isn't it, haha.
-
 ###Require###
-Require python and vim compled with python feature. and install code search
+Require python and vim compled with python feature. and install [code search](http://code.google.com/p/codesearch/)
 
 
 ##Common intereface##
-all tools in vim-assit  such as FileNavigation or historyFile search, will open a window to show the search result, In this window you can use following keymaps
+all tools in vim-assit  such as locatefile or code search, will open a window to show the search result, In this window you can use following keymaps
 
 * `<esc>`   close the search window
 * `<enter>` open file under cursor and close the search window
@@ -22,7 +20,7 @@ all tools in vim-assit  such as FileNavigation or historyFile search, will open 
 Locate file is used for quick file search, just like ctrlp and command-t
 
 ###L###
-use command L, it will search the all the file under vim current dir.
+use command L, it will search the all the file under vim current dir or the path you set by command Lcd
 
 	:L part-of-filename
 
@@ -36,7 +34,7 @@ set the search dir, the default one is vim current dir.
 
 ##Code Search##
 
-First you should install google code search tool, and set it to $PATH, and setup these tow program's path, maybe like this:
+First you should install [google code search tool](http://code.google.com/p/codesearch/), and set it to $PATH, and setup these tow program's path, maybe like this:
 
 	let g:assist_csearch="~/Apps/codesearch-0.01/csearch"
 	let g:assist_cindex="~/Apps/codesearch-0.01/cindex"
@@ -46,17 +44,25 @@ It will show line that match this pattern, if pattern is empty(that you just inp
 
 	:Cs pattern
 
-after the result is shown in the buffer, you can continue search by input filename@content, which will compare the search result with filename and content.
+after the result is shown in the buffer, you can continue search by input filename@content, which will compare the search result with filename and content. for example
+bar@foo, it will search in the candidate which file name contain 'bar' and foo cotained in content
+
+pattern, use * to represent any number of any char, and $ represent end. ^ represent start, for example
+
+	^dox*bar*.cpp$
+
+and the dir that you want to search can be set by command Cscd.
+
+###Cscd##
+only search code under dir-path
+
+	Cscd dir-path
 
 ###Cindex###
 make index for code-dir
 
 	:Cindex code-dir
 
-###Csdir##
-only search code under dir-path
-
-	Cscd dir-path
 
 ##Buffer Search##
 ###Bs###
