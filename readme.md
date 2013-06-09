@@ -49,7 +49,9 @@ bar@foo, it will search in the candidate which file name contain 'bar' and foo c
 
 pattern, use * to represent any number of any char, and $ represent end. ^ represent start, for example
 
-	^dox*bar*.cpp$
+	^dox*bar*.cpp$@^class*Message$
+
+it will search the tag  which file name is start with "dox" and end with ".cpp", and content is start with "class", end with "Message"
 
 and the dir that you want to search can be set by command Cscd.
 
