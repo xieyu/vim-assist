@@ -5,7 +5,9 @@ import vim
 import VimUi
 import SearchBackend
 
-from Candidate import FileCandidate 
+from StoreManager import StoreManager
+from Candidate import FileCandidate
+from Candidate import Candidate
 from Common import CommonUtil
 
 class Locate:
@@ -14,6 +16,9 @@ class Locate:
         if not hasattr(Locate, "_instance"):
             Locate._instance = Locate()
         return Locate._instance
+
+    def __init__(self):
+        self.storeKey = "LcdHistory"
 
     def search(self, symbol):
         candidates = getattr(self, "cachedCandidates", self.makeIndex())
@@ -56,11 +61,6 @@ class Locate:
         else:
             SearchBackend.showSearchResult(matchedCandidates)
 
-    def setSearchDir(self, dir):
-        path = os.path.abspath(dir)
-        self.searchDir = path
-        self.makeIndex()
-
     def makeIndex(self):
         path = getattr(self, "searchDir", os.getcwd())
         candidates = []
@@ -71,3 +71,51 @@ class Locate:
                 candidates.append(candidate)
         self.cachedCandidates = candidates
         return self.cachedCandidates
+
+
+    def setSearchDir(self, dirPath):
+        if dirPath is "":
+            self.showCdHistory()
+        else:
+            dirPath = os.path.abspath(dirPath)
+            self.addToCdHistory(dirPath)
+            self.doSetSearchDir(dirPath)
+
+    def doSetSearchDir(self, dir):
+        path = os.path.abspath(dir)
+        self.searchDir = path
+        self.makeIndex()
+
+    def showCdHistory(self):
+        history = StoreManager.load(self.storeKey)
+        candidates = [LocateCdCandidate(str(candidate)) for candidate in history]
+        SearchBackend.showSearchResult(candidates, filterCheck=locatefilterCheck)
+
+    def addToCdHistory(self, dirPath):
+        history = StoreManager.load(self.storeKey)
+        if dirPath not in history:
+            history.append(dirPath)
+        StoreManager.save(self.storeKey, history)
+
+    def editCdHistory(self):
+        StoreManager.editSavedValue(self.storeKey)
+
+
+class LocateCdCandidate(Candidate):
+    def __init__(self, dirPath):
+        self.dirPath = dirPath
+
+    def displayText(self):
+        return self.dirPath
+
+    def onAction(self, action):
+        Locate.instance().doSetSearchDir(self.dirPath)
+
+        if action =="close":
+            return True
+
+        if action == "preview":
+            return False
+
+def locatefilterCheck(word, candidate):
+    return word in candidate.dirPath

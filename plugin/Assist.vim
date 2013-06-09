@@ -14,6 +14,7 @@ endfunction
 call RunPyFile("Init.py")
 call RunPyFile("Common.py")
 call RunPyFile("VimUi.py")
+call RunPyFile("StoreManager.py")
 call RunPyFile("CodeSearch.py")
 call RunPyFile("BufferSearch.py")
 call RunPyFile("Locate.py")
@@ -32,7 +33,7 @@ command! -nargs=1 -complete=dir Cindex   py CodeSearch.instance().makeIndex(<q-a
 
 "Locate file
 command! -nargs=? L                      py Locate.instance().search(<q-args>)
-command! -nargs=1 -complete=dir Lcd      py Locate.instance().setSearchDir(<q-args>)
+command! -nargs=? -complete=dir Lcd      py Locate.instance().setSearchDir(<q-args>)
 command! Lswitch                         py Locate.instance().switchHeadAndImpl()
 
 "Gitk
