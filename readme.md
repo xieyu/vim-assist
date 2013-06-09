@@ -32,6 +32,12 @@ set the search dir, the default one is vim current dir.
 
 	:Lcd ~/codes/demo
 
+###Lswitch###
+
+switch between [.h|.hpp] with [.cpp|.m|.c|.cc] in vim current dir or the dir set by Lcd
+	
+	:Lswitch
+
 ##Code Search##
 
 First you should install [google code search tool](http://code.google.com/p/codesearch/), and set it to $PATH, and setup these tow program's path, maybe like this:

@@ -21,8 +21,41 @@ class Locate:
         for candidate in candidates:
                 if CommonUtil.fileMatch(symbol, candidate.path):
                     matchedCandidates.append(candidate)
-        SearchBackend.showSearchResult(matchedCandidates)
-        
+
+        if len(matchedCandidates) == 1:
+            matchedCandidates[0].onAction("close")
+        else:
+            SearchBackend.showSearchResult(matchedCandidates)
+
+    def switchHeadAndImpl(self):
+        '''
+        switch between [.h|.hpp] with [.cpp|.m|.c|.cc]
+        '''
+        try:
+            filename = os.path.basename(vim.current.buffer.name)
+        except:
+            return
+        s = []
+        extentions = [".cpp", ".c", ".cc", ".m"]
+        if re.search("\.(h|hpp)$", filename):
+            for ext in extentions:
+                s.append(re.sub("\.(h|hpp)$", ext, filename))
+        elif re.search("\.(c|cpp|cc|m)$", filename):
+            s.append(re.sub("\.(c|cpp|cc)$", ".h", filename))
+            s.append(re.sub("\.(c|cpp|cc)$", ".hpp", filename))
+
+        candidates = getattr(self, "cachedCandidates", self.makeIndex())
+        matchedCandidates = []
+        for candidate in candidates:
+            for pattern in s:
+                if CommonUtil.fileMatch(pattern + "$", candidate.path):
+                    matchedCandidates.append(candidate)
+                    break
+        if len(matchedCandidates) == 1:
+            matchedCandidates[0].onAction("close")
+        else:
+            SearchBackend.showSearchResult(matchedCandidates)
+
     def setSearchDir(self, dir):
         path = os.path.abspath(dir)
         self.searchDir = path

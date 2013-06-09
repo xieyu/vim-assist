@@ -33,6 +33,7 @@ command! -nargs=1 -complete=dir Cindex   py CodeSearch.instance().makeIndex(<q-a
 "Locate file
 command! -nargs=? L                      py Locate.instance().search(<q-args>)
 command! -nargs=1 -complete=dir Lcd      py Locate.instance().setSearchDir(<q-args>)
+command! Lswitch                         py Locate.instance().switchHeadAndImpl()
 
 "Gitk
 command! Gkblame                         py Gitk.gitkCurrentLine()
