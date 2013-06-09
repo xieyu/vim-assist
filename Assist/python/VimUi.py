@@ -1,8 +1,60 @@
-#intereface for Hot SearchWindow
 import vim
 import re
 
-class DisplayWindow(object):
+class EventDelegate(object):
+    def onKeyPressed(self, key):
+        pass
+
+    def onAction(self, action):
+        pass
+
+    def getKeyActionMaps(self):
+        return []
+
+class EventDispatcher:
+    @staticmethod
+    def instance():
+        if not hasattr(EventDispatcher, "_instance"):
+            EventDispatcher._instance = EventDispatcher()
+        return EventDispatcher._instance
+
+    def onKeyPressed(self, key):
+        self.delegate.onKeyPressed(key)
+
+    def onCursorMove(self, key):
+        self.delegate.onCursorMove(key)
+
+    def onAction(self, action):
+        self.delegate.onAction(action)
+
+    def setDelegate(self, delegate):
+        self.delegate = delegate
+
+    def setEnablePrintableKey(self, enable):
+        self.enablePrintableKey = enable
+
+    def makeMaps(self):
+        mapcmd = "noremap <silent> <buffer>"
+        #must have VimUi at here, otherwise py will use __main__.EventDispather instead of VimUi.EventDispather
+        #which is used in ShowWindow.
+        handler = "VimUi.EventDispatcher.instance()"
+        vim.command('''%s  <Tab>    :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "Tab"))
+        vim.command('''%s  <BS>     :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "BS"))
+        vim.command('''%s  <Del>    :py %s.onKeyPressed('%s')<cr>''' %(mapcmd, handler, "Del"))
+        vim.command('''%s  <Esc>    :py %s.onKeyPressed('%s')<cr>'''%(mapcmd, handler, "ESC"))
+        vim.command('''%s  <C-j>    :py %s.onCursorMove('down')<cr>''' %(mapcmd, handler))
+        vim.command('''%s  <C-k>    :py %s.onCursorMove('up')<cr>''' %(mapcmd, handler))
+
+        if self.enablePrintableKey:
+            printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
+            for byte in printables :
+                vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, handler, byte))
+
+        if self.delegate:
+            for keyMap in self.delegate.getKeyActionMaps():
+                vim.command("%s %s :python %s.onAction('%s')<CR>"%(mapcmd, keyMap[0], handler, keyMap[1]))
+
+class DisplayWindow(EventDelegate):
     def __init__(self, backend):
         self.backend = backend
         self.iterms = []
@@ -85,61 +137,44 @@ class DisplayWindow(object):
         vim.command("set report=9999")
         vim.command("set sidescroll=0")
         vim.command("set sidescrolloff=0")
+        vim.command("set ft=cpp")
 
-        #vim.command("set guicursor+=a:blinkon0")
-        #bg = vim.eval("""synIDattr(synIDtrans(hlID("Normal")), "bg")""")
-        #if bg :
-        #    vim.command("highlight Cursor guifg=black guibg=%s" % (bg))
-
-    def doMapKeys(self, selfName):
-        mapcmd = "noremap <silent> <buffer>"
-        vim.command("%s  <Tab>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "Tab"))
-        vim.command("%s  <BS>     :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "BS"))
-        vim.command("%s  <Del>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "Del"))
-        vim.command("%s  <Esc>    :python %s.onKeyPressed('%s')<cr>" %(mapcmd, selfName, "ESC"))
-        vim.command("%s  <C-j>    :python %s.onCursorMove('down')<cr>" %(mapcmd, selfName))
-        vim.command("%s  <C-k>    :python %s.onCursorMove('up')<cr>" %(mapcmd, selfName))
-
-        for keyMap in self.backend.getKeyActionMaps():
-            vim.command("%s %s :python %s.handleKeyAction('%s')<CR>"%(mapcmd, keyMap[0], selfName, keyMap[1]))
-
-    def show(self, selfName):
+    def show(self):
         self.createShowBuffer()
-        self.doMapKeys(selfName)
+        dispatcher = EventDispatcher.instance()
+        dispatcher.setDelegate(self)
+        dispatcher.makeMaps()
         self.iterms = self.backend.getDisplayIterms()
         self.showIterms(self.iterms)
 
     def onKeyPressed(self, key):
         if key == "ESC":
-            self.clean()
-
-    def onPastContent(self):
-        content = vim.eval("getreg('+')")
-        content = content.replace("\n","").strip()
-        self.prompt.append(content)
-        self.prompt.show()
-        self.showMatchedResult()
+            self.close()
 
     def onCursorMove(self, direction):
         work_buffer = vim.current.buffer
         win = vim.current.window
-        row,col = win.cursor
+        row, col = win.cursor
         if direction == "up" :
             if row > 1 : win.cursor = ( row-1 , col)
         else :
             if row < len(work_buffer) : win.cursor = ( row+1 , col)
 
-    def handleKeyAction(self, action):
+    def onAction(self, action):
         row, col = vim.current.window.cursor
         if len(self.iterms) < row:
             return
         iterm = self.iterms[row - 1]
         shouldCloseWindow = self.backend.handle(action, iterm)
         if shouldCloseWindow:
-            self.clean()
+            self.close()
 
-    def clean(self):
-        vim.command("bwipeout")
+    def getKeyActionMaps(self):
+        return self.backend.getKeyActionMaps()
+
+    def close(self):
+        #EventDispatcher.setDelegate(None)
+        vim.command("silent bwipeout")
         vim.command("echo ''")
         self.restoreEnv()
         self.restoreWinsize()
@@ -165,23 +200,20 @@ class SearchWindow(DisplayWindow):
         self.prompt = Prompt()
         self.backend = backend
 
-    def show(self, selfName):
+    def show(self):
         self.createShowBuffer()
-        self.doMapKeys(selfName)
-        self.iterms = self.backend.getInitDisplayIterms()
+        dispatcher = EventDispatcher.instance()
+        dispatcher.setDelegate(self)
+        dispatcher.setEnablePrintableKey(True)
+        dispatcher.makeMaps()
+        self.backend.prepare()
+        self.iterms = self.backend.getInitDisplayCandidates()
         self.showIterms(self.iterms)
 
     def showMatchedIterms(self):
         pat = self.prompt.getName()
         self.iterms = self.backend.search(pat)
         self.showIterms(self.iterms)
-
-    def doMapKeys(self, selfName):
-        super(SearchWindow, self).doMapKeys(selfName)
-        printables = """/!"#$%&'()*+,-.0123456789:<=>?#@"ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{}~"""
-        mapcmd = "noremap <silent> <buffer>"
-        for byte in printables :
-            vim.command("%s %s :python %s.onKeyPressed('%s')<CR>" % (mapcmd, byte, selfName, byte))
 
     def onKeyPressed(self, key):
         if key == "Tab" :
@@ -191,7 +223,7 @@ class SearchWindow(DisplayWindow):
             self.prompt.show()
             self.showMatchedIterms()
         elif key == "ESC":
-            self.clean()
+            self.close()
         else :
             self.prompt.append(key)
             self.prompt.show()
