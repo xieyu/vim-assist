@@ -19,6 +19,7 @@ call RunPyFile("CodeSearch.py")
 call RunPyFile("BufferSearch.py")
 call RunPyFile("Locate.py")
 call RunPyFile("Gitk.py")
+call RunPyFile("Ctags.py")
 
 
 "Commands:
@@ -31,8 +32,12 @@ command! -nargs=? Cs                     py CodeSearch.instance().search(<q-args
 command! -nargs=1 -complete=dir Cscd     py CodeSearch.instance().setSearchDir(<q-args>)
 command! -nargs=1 -complete=dir Cindex   py CodeSearch.instance().makeIndex(<q-args>)
 
+"ctags search
+command! -nargs=? Ctagcurfile                  py Ctags.instance().searchCurrentFile(<q-args>)
+
 "Locate file
 command! -nargs=? L                      py Locate.instance().search(<q-args>)
+command! -nargs=? Lbuffer                py Locate.instance().searchBuffer(<q-args>)
 command! -nargs=? -complete=dir Lcd      py Locate.instance().setSearchDir(<q-args>)
 command! Lswitch                         py Locate.instance().switchHeadAndImpl()
 

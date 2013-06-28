@@ -32,6 +32,12 @@ class Locate:
         else:
             SearchBackend.showSearchResult(matchedCandidates)
 
+    def searchBuffer(self, symbol):
+        candidates = [FileCandidate(buffer.name) for buffer in vim.buffers if buffer.name and symbol in buffer.name]
+        if len(candidates) == 1:
+            candidates[0].onAction("close")
+        SearchBackend.showSearchResult(candidates)
+
     def switchHeadAndImpl(self):
         '''
         switch between [.h|.hpp] with [.cpp|.m|.c|.cc]
@@ -76,6 +82,8 @@ class Locate:
     def setSearchDir(self, dirPath):
         if dirPath is "":
             self.showCdHistory()
+        elif not os.path.exists(os.path.abspath(dirPath)):
+            self.showFilterCdHistory(dirPath)
         else:
             dirPath = os.path.abspath(dirPath)
             self.addToCdHistory(dirPath)
@@ -88,7 +96,12 @@ class Locate:
 
     def showCdHistory(self):
         history = StoreManager.load(self.storeKey)
-        candidates = [LocateCdCandidate(str(candidate)) for candidate in history]
+        candidates = [LocateCdCandidate(str(path)) for path in history]
+        SearchBackend.showSearchResult(candidates, filterCheck=locatefilterCheck)
+
+    def showFilterCdHistory(self, symbol):
+        history = StoreManager.load(self.storeKey)
+        candidates = [LocateCdCandidate(str(path)) for path in history if symbol in path]
         SearchBackend.showSearchResult(candidates, filterCheck=locatefilterCheck)
 
     def addToCdHistory(self, dirPath):
