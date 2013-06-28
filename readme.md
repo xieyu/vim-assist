@@ -32,23 +32,31 @@ set the search dir, the default one is vim current dir.
 
 	:Lcd ~/codes/demo
 
+if the path is not exist, for example <code>:Lcd demo</code>, then it will open a window and show all the history path(which you Lcd before..) which match 'demo'.
+
 ###Lswitch###
 
 switch between [.h|.hpp] with [.cpp|.m|.c|.cc] in vim current dir or the dir set by Lcd
 	
 	:Lswitch
 
+###Lbuffer###
+use command Lbuffer, it will list all the file that you opened in vim now. then you can quick search and jump to that file
+
+	:Lbuffer
+
 ##Ctags Search##
-
-require install <code>exuberant-ctags</code>, for ubuntu user:
-
-	sudo apt-get install exuberant-ctags
 
 this tool is used to quick locate to the function or class defined in current file. current provide one command:
 
 	:Ctagcurfile
 
-this command will list all the symbols(function, marco, class) define in the search window, then you can input some pattern to search.
+require install <code>exuberant-ctags</code>, for ubuntu user:
+
+	sudo apt-get install exuberant-ctags
+
+
+<code>Ctagcurfile</code> command will list all the symbols(function, marco, class) define in the search window, then you can input some pattern to quick search.
 
 suggest make a map for it in your <code>.vimrc</code>
 
@@ -63,7 +71,14 @@ then set it to $PATH, and setup these tow tool's path in your <code>.vimrc</code
 	let g:assist_csearch="~/Apps/codesearch-0.01/csearch"
 	let g:assist_cindex="~/Apps/codesearch-0.01/cindex"
 
+###Cindex###
+make index for code-dir
+
+	:Cindex code-dir
+
 ###Cs###
+before search, you should make index by command <code>:Cindex</code>
+
 It will show line that match this pattern, if pattern is empty(that you just input command Cs), then word under the cursor will be used.
 
 	:Cs pattern
@@ -80,15 +95,9 @@ it will search the tag  which file name is start with "dox" and end with ".cpp",
 and the dir that you want to search can be set by command Cscd.
 
 ###Cscd##
-only search code under dir-path
+only search code under dir-path, if not set, it will search all files that you have cindexed. 
 
 	Cscd dir-path
-
-###Cindex###
-make index for code-dir
-
-	:Cindex code-dir
-
 
 ##Buffer Search##
 ###Bs###
@@ -123,3 +132,10 @@ command <code>Gklog</code>, this will call gitk to show the log of current file.
 same useage as command gitk
 
 	:Gitk args
+
+##TODO##
+* better search pattern, and rank, hightlight search result.
+* locate to symobl quick in the project instead of just cur file.
+* make index of LocateFile, so can hold large code project like webkit.
+* bookmark, history search, open file with sys default app.
+* google, stackoverflow, wiki search etc.
