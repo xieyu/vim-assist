@@ -38,9 +38,27 @@ switch between [.h|.hpp] with [.cpp|.m|.c|.cc] in vim current dir or the dir set
 	
 	:Lswitch
 
+##Ctags Search##
+
+require install <code>exuberant-ctags</code>, for ubuntu user:
+
+	sudo apt-get install exuberant-ctags
+
+this tool is used to quick locate to the function or class defined in current file. current provide one command:
+
+	:Ctagcurfile
+
+this command will list all the symbols(function, marco, class) define in the search window, then you can input some pattern to search.
+
+suggest make a map for it in your <code>.vimrc</code>
+
+	nmap <leader>c  :Ctagcurfile<CR>
+
 ##Code Search##
 
-First you should install [google code search tool](http://code.google.com/p/codesearch/), and set it to $PATH, and setup these tow program's path, maybe like this:
+First you should install [google code search tool](http://code.google.com/p/codesearch/), 
+
+then set it to $PATH, and setup these tow tool's path in your <code>.vimrc</code>,  like this:
 
 	let g:assist_csearch="~/Apps/codesearch-0.01/csearch"
 	let g:assist_cindex="~/Apps/codesearch-0.01/cindex"
