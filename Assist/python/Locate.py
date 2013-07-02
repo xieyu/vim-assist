@@ -73,10 +73,30 @@ class Locate:
         for root, dirs, files in os.walk(path):
             for file in files:
                 filePath = os.path.join(root, file)
-                candidate = FileCandidate(filePath)
-                candidates.append(candidate)
+                if not self.isIgnorePath(filePath):
+                    candidate = FileCandidate(filePath)
+                    candidates.append(candidate)
         self.cachedCandidates = candidates
         return self.cachedCandidates
+
+    def isIgnorePath(self, path):
+        def isReIgnore(ignorePatterns, items):
+            ignorePattern = [re.compile(rawPattern) for rawPattern in ignorePatterns]
+            for pattern in ignorePattern:
+                for item in items:
+                    if pattern.search(item):
+                        return True
+            return False
+
+        ignoreDirs = ["^.git$"]
+        if isReIgnore(ignoreDirs, path.split(os.sep)):
+            return True
+
+        ignoreFilePatterns =[".pyc$", ".o$"]
+        if isReIgnore(ignoreFilePatterns, [os.path.basename(path)]):
+            return True
+
+        return False
 
 
     def setSearchDir(self, dirPath):
