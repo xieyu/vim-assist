@@ -19,6 +19,7 @@ class Locate:
 
     def __init__(self):
         self.storeKey = "LcdHistory"
+        self.editHistoryKey = "editHistory"
 
     def search(self, symbol):
         candidates = getattr(self, "cachedCandidates", self.makeIndex())
@@ -113,6 +114,33 @@ class Locate:
         path = os.path.abspath(dir)
         self.searchDir = path
         self.makeIndex()
+
+    def showEditHistory(self):
+        editHistory = StoreManager.load(self.editHistoryKey)
+        editHistory.reverse()
+        if editHistory:
+            candidates = [FileCandidate(str(path)) for path in editHistory]
+            SearchBackend.showSearchResult(candidates)
+        else:
+            print "empty history"
+
+    def addToEditHistory(self):
+        filePath = vim.current.buffer.name
+        if not os.path.exists(filePath):
+            return
+
+        history = StoreManager.load(self.editHistoryKey)
+        for i, historyFileName in enumerate(history):
+            if historyFileName == filePath:
+                del history[i]
+                break
+
+        history.append(filePath)
+        StoreManager.save(self.editHistoryKey , history)
+
+    def editHistory(self):
+        StoreManager.editSavedValue(self.editHistoryKey);
+
 
     def showCdHistory(self):
         history = StoreManager.load(self.storeKey)

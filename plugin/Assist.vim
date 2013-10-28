@@ -20,6 +20,7 @@ call RunPyFile("BufferSearch.py")
 call RunPyFile("Locate.py")
 call RunPyFile("Gitk.py")
 call RunPyFile("Ctags.py")
+call RunPyFile("Google.py")
 
 
 "Commands:
@@ -33,15 +34,19 @@ command! -nargs=1 -complete=dir Cscd     py CodeSearch.instance().setSearchDir(<
 command! -nargs=1 -complete=dir Cindex   py CodeSearch.instance().makeIndex(<q-args>)
 
 "ctags search
-command! -nargs=? Ctagcurfile                  py Ctags.instance().searchCurrentFile(<q-args>)
+command! -nargs=? Ctagcurfile            py Ctags.instance().searchCurrentFile(<q-args>)
 
 "Locate file
 command! -nargs=? L                      py Locate.instance().search(<q-args>)
 command! -nargs=? Lbuffer                py Locate.instance().searchBuffer(<q-args>)
 command! -nargs=? -complete=dir Lcd      py Locate.instance().setSearchDir(<q-args>)
 command! Lswitch                         py Locate.instance().switchHeadAndImpl()
+command! Lhistory                        py Locate.instance().showEditHistory()
+au BufRead,BufNewFile *					 py Locate.instance().addToEditHistory()
+
 
 "Gitk
 command! Gkblame                         py Gitk.gitkCurrentLine()
 command! Gklog                           py Gitk.gitkLogCurrentBuffer()
 command! -nargs=* Gitk                   py Gitk.gitkCmd(<q-args>)
+command! -nargs=* Google				 py Google(<q-args>)
